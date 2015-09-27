@@ -145,7 +145,7 @@ def intersections(lines):
                 continue
 
             key = tuple(sorted([i, j]))
-            points[key] = tuple(point.flatten())
+            points[key] = point
 
     return points
 
@@ -164,14 +164,17 @@ def remove_duplicate_lines(lines, min_ang_diff, img_shape):
             if i <= j:
                 continue
 
+            similar = similar_angle(line_a, line_b, min_ang_diff)
+            if not similar:
+                continue
+
             ok, point = intersection(line_a, line_b)
             if not ok:
                 continue
 
             in_view = point_in_view(point, img_shape)
-            similar = similar_angle(line_a, line_b, min_ang_diff)
 
-            if in_view and similar:
+            if in_view:
                 to_remove.add(max(i, j))
 
     cleaned = [line for i, line in enumerate(lines) if i not in to_remove]
@@ -183,7 +186,7 @@ def draw_points(img, points):
     color = (255, 0, 0)
 
     for point in points:
-        cv2.circle(cpy, point, 2, color, thickness=-1)
+        cv2.circle(cpy, tuple(point), 2, color, thickness=-1)
 
     return cpy
 
