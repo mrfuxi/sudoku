@@ -3,6 +3,7 @@ from collections import OrderedDict
 import cv2
 import numpy as np
 
+
 def similar_angle(line_a, line_b, min_ang_diff=0.5):
     """
     lines has to differ by some value
@@ -111,10 +112,10 @@ def remove_duplicate_lines(lines, min_ang_diff, img_shape):
     return cleaned
 
 
-def generate_angle_buckets(bucket_size, step, ortogonal=True):
+def generate_angle_buckets(bucket_size, step=None, ortogonal=True):
     """
     Creates a dict with ortogonal (if required) ranges for angles (in radians)
-    Both bucket_size and step are taken in deg (to make it easier to reason about)
+    Both bucket_size and step are taken in deg (it's easier to reason about)
     Angles between 0 and 180 deg
 
     Example output (bucket_size=20, step=5) - all values in deg:
@@ -124,8 +125,8 @@ def generate_angle_buckets(bucket_size, step, ortogonal=True):
     }
     """
 
-    step = np.deg2rad(step)
     window = np.deg2rad(bucket_size)
+    step = np.deg2rad(step or bucket_size)
 
     window_2 = window/2.0
     pos = 0
@@ -158,3 +159,16 @@ def generate_angle_buckets(bucket_size, step, ortogonal=True):
             break
 
     return buckets
+
+
+def is_angle_in_bucket(angle, ranges):
+    """
+    takes a list of ranges for a given bucket,
+    and angle to test
+    """
+
+    for start, end in ranges:
+        if start <= angle <= end:
+            return True
+
+    return False
