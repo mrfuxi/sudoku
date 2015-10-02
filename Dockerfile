@@ -15,4 +15,6 @@ ADD examples ./examples
 ADD *.py ./
 ADD *.ipynb ./
 
+VOLUME /code
+
 CMD ipython notebook --ip=0.0.0.0 --no-browser
