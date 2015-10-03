@@ -11,10 +11,7 @@ RUN pip install ipython[notebook]
 EXPOSE 8888
 
 WORKDIR /code
-ADD examples ./examples
-ADD *.py ./
-ADD *.ipynb ./
-
+ADD . ./
 VOLUME /code
 
 CMD ipython notebook --ip=0.0.0.0 --no-browser
