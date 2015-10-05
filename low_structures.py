@@ -172,3 +172,20 @@ def is_angle_in_bucket(angle, ranges):
             return True
 
     return False
+
+
+def put_lines_into_buckets(buckets, lines):
+    bucketed = []
+    for bucket_angle, bucket in buckets.iteritems():
+        matches = []
+
+        for line in lines:
+            if is_angle_in_bucket(line[0][1], bucket):
+                matches.append(line)
+
+        if matches:
+            bucketed.append((bucket_angle, matches))
+
+    # sort by most numbers of matches in bucket
+    bucketed = sorted(bucketed, key=lambda b: len(b[1]), reverse=True)
+    return bucketed
