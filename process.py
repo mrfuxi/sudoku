@@ -70,4 +70,4 @@ def find_lines(img, limit=100):
     theta = np.pi/180
 
     lines = cv2.HoughLines(img, rho=rho, theta=theta, threshold=threshold)
-    return lines[:limit]
+    return [line[0] for line in lines[:limit]]

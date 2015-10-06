@@ -12,8 +12,8 @@ def similar_angle(line_a, line_b, min_ang_diff=0.5):
     if min_ang_diff <= 0:
         return False
 
-    th_a = line_a[0][1]
-    th_b = line_b[0][1]
+    th_a = line_a[1]
+    th_b = line_b[1]
 
     ang_diff = np.abs(th_a - th_b)
     if ang_diff < min_ang_diff or ang_diff > (np.pi - min_ang_diff):
@@ -30,8 +30,8 @@ def intersection(line_a, line_b, min_ang_diff=0):
     As matrix:
     A*X = b
     """
-    r_a, th_a = line_a[0]
-    r_b, th_b = line_b[0]
+    r_a, th_a = line_a
+    r_b, th_b = line_b
 
     # if min_ang_diff and similar_angle(line_a, line_b, min_ang_diff):
     #     return None, (0, 0)
@@ -180,7 +180,7 @@ def put_lines_into_buckets(buckets, lines):
         matches = []
 
         for line in lines:
-            if is_angle_in_bucket(line[0][1], bucket):
+            if is_angle_in_bucket(line[1], bucket):
                 matches.append(line)
 
         if matches:

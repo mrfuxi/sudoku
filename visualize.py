@@ -34,7 +34,7 @@ def draw_lines(img, lines, color=None, thickness=2):
         color = (0, 255, 0)
 
     for line in lines:
-        rho, theta = line[0]
+        rho, theta = line
         a = np.cos(theta)
         b = np.sin(theta)
         x0 = a*rho
