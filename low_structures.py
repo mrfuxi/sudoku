@@ -1,5 +1,6 @@
 from collections import OrderedDict
 
+import math
 import cv2
 import numpy as np
 
@@ -21,7 +22,7 @@ def similar_angle(line_a, line_b, min_ang_diff=0.5):
     return False
 
 
-def intersection(line_a, line_b, min_ang_diff=0):
+def intersection(line_a, line_b, min_ang_diff):
     """
     Solve:
     x*cos(th_a) + y*sin(th_a) = r_a
@@ -33,16 +34,16 @@ def intersection(line_a, line_b, min_ang_diff=0):
     r_a, th_a = line_a
     r_b, th_b = line_b
 
-    # if min_ang_diff and similar_angle(line_a, line_b, min_ang_diff):
-    #     return None, (0, 0)
+    if similar_angle(line_a, line_b, min_ang_diff=min_ang_diff):
+        return False, None
 
     A = np.array([
         [np.cos(th_a), np.sin(th_a)],
         [np.cos(th_b), np.sin(th_b)],
     ])
     b = np.array([r_a, r_b])
-    ret, dst = cv2.solve(A, b)
-    return ret, dst
+    ok, point = cv2.solve(A, b)
+    return ok, tuple(x[0] for x in point)
 
 
 def point_in_view(point, img_shape, scope=0.5):
@@ -63,7 +64,7 @@ def point_in_view(point, img_shape, scope=0.5):
     )
 
 
-def intersections(lines):
+def intersections(lines, min_ang_diff=0):
     points = {}
 
     for i, line_a in enumerate(lines):
@@ -71,7 +72,7 @@ def intersections(lines):
             if i <= j:
                 continue
 
-            ok, point = intersection(line_a, line_b)
+            ok, point = intersection(line_a, line_b, min_ang_diff)
             if not ok:
                 continue
 
@@ -99,7 +100,7 @@ def remove_duplicate_lines(lines, min_ang_diff, img_shape):
             if not similar:
                 continue
 
-            ok, point = intersection(line_a, line_b)
+            ok, point = intersection(line_a, line_b, min_ang_diff=0)
             if not ok:
                 continue
 
@@ -189,3 +190,42 @@ def put_lines_into_buckets(buckets, lines):
     # sort by most numbers of matches in bucket
     bucketed = sorted(bucketed, key=lambda b: len(b[1]), reverse=True)
     return bucketed
+
+
+def bind_intersections_to_lines(lines):
+    binded = [
+        [angle, distance, []] for angle, distance in lines
+    ]
+    points = intersections(lines, np.deg2rad(45))
+    for (line_a, line_b), point in points.items():
+        binded[line_a][2].append(point)
+        binded[line_b][2].append(point)
+
+    for line in binded:
+        line[2] = sorted(line[2])
+
+    return binded
+
+
+def distance_between_points(point_a, point_b):
+    return math.sqrt(
+        (point_a[0]-point_b[0])**2 + (point_a[1]-point_b[1])**2
+    )
+
+
+def fragment_lenghts(binded_lines):
+    distances = []
+    for angle, distance, points in binded_lines:
+        for point_a, point_b in zip(points, points[1:]):
+            dist = distance_between_points(point_a, point_b)
+            distances.append(dist)
+
+    return distances
+
+
+def average_fragment_len(binded_lines):
+    """
+    Calculates average distance between consecutive points on the line/grid
+    """
+    lengths = fragment_lenghts(binded_lines)
+    return np.mean(lengths)
