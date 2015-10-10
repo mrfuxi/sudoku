@@ -1,4 +1,4 @@
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 
 import math
 import cv2
@@ -204,7 +204,11 @@ def bind_intersections_to_lines(lines):
     for line in binded:
         line[2] = sorted(line[2])
 
-    return binded
+    # reverse keys with values in dict
+    # values (points) will be unique
+    points_to_lines = {point: lines for lines, point in points.items()}
+
+    return binded, points_to_lines
 
 
 def distance_between_points(point_a, point_b):
@@ -215,7 +219,7 @@ def distance_between_points(point_a, point_b):
 
 def fragment_lenghts(binded_lines):
     distances = []
-    for angle, distance, points in binded_lines:
+    for distance, angle, points in binded_lines:
         for point_a, point_b in zip(points, points[1:]):
             dist = distance_between_points(point_a, point_b)
             distances.append(dist)
@@ -223,9 +227,42 @@ def fragment_lenghts(binded_lines):
     return distances
 
 
-def average_fragment_len(binded_lines):
+def valid_fragment_lenghts(binded_lines):
     """
     Calculates average distance between consecutive points on the line/grid
     """
     lengths = fragment_lenghts(binded_lines)
-    return np.mean(lengths)
+    avg = np.mean(lengths)
+    sigma = np.std(lengths)
+
+    return (avg - sigma*2, avg + sigma*2)
+
+
+def remove_very_close_lines(lines):
+    """
+    Removes lines that are very close to each other (removes the later one)
+    It should be used on lines from orthogonal buckets
+    """
+    binded, points = bind_intersections_to_lines(lines)
+    len_min, len_max = valid_fragment_lenghts(binded)
+
+    scores = defaultdict(int)
+
+    for i, line in enumerate(binded):
+        for point_a, point_b in zip(line[2], line[2][1:]):
+            dist = distance_between_points(point_a, point_b)
+            score = 1
+            if dist < len_min or len_max < dist:
+                score = -1
+
+            key = tuple(
+                sorted(
+                    set(points[point_a]) ^ set(points[point_b])
+                )
+            )
+
+            scores[key] += score
+
+    to_remove = [lines[1] for lines, score in scores.items() if score < 0]
+
+    return [line for i, line in enumerate(lines) if not i in to_remove]
