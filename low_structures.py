@@ -263,6 +263,5 @@ def remove_very_close_lines(lines):
 
             scores[key] += score
 
-    to_remove = [lines[1] for lines, score in scores.items() if score < 0]
-
-    return [line for i, line in enumerate(lines) if not i in to_remove]
+    to_remove = [line_pair[1] for line_pair, score in scores.items() if score < 0]
+    return [line for i, line in enumerate(lines) if i not in to_remove]
