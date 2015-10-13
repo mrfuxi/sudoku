@@ -17,24 +17,33 @@ def draw_points(img, points):
     return cpy
 
 
-def draw_lines(img, lines, color=None, thickness=2):
+def draw_lines(img, lines, color=None, thickness=2, rgb=True, draw_on_empty=False):
     """
     Draws lines on image.
     To visualize state of processing
     """
+    if draw_on_empty:
+        cpy = np.empty_like(img)
+        cpy.fill(0)
+    else:
+        cpy = img.copy()
 
-    cpy = img.copy()
-    if len(cpy.shape) == 2:
-        cpy = cv2.cvtColor(cpy, cv2.COLOR_GRAY2RGB)
+    if rgb:
+        if not color:
+            color = (0, 255, 0)
+
+        if len(cpy.shape) == 2:
+            cpy = cv2.cvtColor(cpy, cv2.COLOR_GRAY2RGB)
+
+    elif not color:
+        color = 255
 
     if cpy.max() <= 1:
         cpy *= 255
 
-    if not color:
-        color = (0, 255, 0)
+    img_rect = (0, 0, img.shape[1], img.shape[0])
 
-    for line in lines:
-        rho, theta = line
+    for rho, theta in lines:
         a = np.cos(theta)
         b = np.sin(theta)
         x0 = a*rho
@@ -44,6 +53,10 @@ def draw_lines(img, lines, color=None, thickness=2):
         x2 = int(x0 - 10000*(-b))
         y2 = int(y0 - 10000*(a))
 
-        cv2.line(cpy, (x1, y1), (x2, y2), color, thickness)
+        in_view, start, end = cv2.clipLine(img_rect, (x1, y1), (x2, y2))
+        if not in_view:
+            continue
+
+        cv2.line(cpy, start, end, color, thickness)
 
     return cpy
