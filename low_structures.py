@@ -227,6 +227,21 @@ def fragment_lenghts(binded_lines):
     return distances
 
 
+def fragment_value(image, point_a, point_b, width=4):
+    """
+    Calculates field under a line fragment (no-zero pixels)
+    Image should be binary.
+    Value is adjusted based on how thick line is expected
+    """
+    w2 = width/2
+    rect = zip(point_a, point_b)
+    start = min(rect[0]) - w2, max(rect[0]) + w2
+    end = min(rect[1]) - w2, max(rect[1]) + w2
+    sub_image = image[end[0]:end[1], start[0]:start[1]]
+    dist = distance_between_points(point_a, point_b)
+    return cv2.countNonZero(sub_image)/(dist*width)
+
+
 def valid_fragment_lenghts(binded_lines):
     """
     Calculates average distance between consecutive points on the line/grid
@@ -263,5 +278,34 @@ def remove_very_close_lines(lines):
 
             scores[key] += score
 
-    to_remove = [line_pair[1] for line_pair, score in scores.items() if score < 0]
+    to_remove = [
+        line_pair[1] for line_pair, score in scores.items() if score < 0
+    ]
     return [line for i, line in enumerate(lines) if i not in to_remove]
+
+
+def remove_disjonted_lines(image, lines):
+    """
+    Removes lines that are very close to each other (removes the later one)
+    It should be used on lines from orthogonal buckets
+    """
+    binded, points = bind_intersections_to_lines(lines)
+
+    scores = defaultdict(list)
+    values = {}
+
+    for i, line in enumerate(binded):
+        for point_a, point_b in zip(line[2], line[2][1:]):
+            keys = set(points[point_a]) ^ set(points[point_b])
+
+            score = fragment_value(image, point_a, point_b)
+            for key in keys:
+                scores[key].append(score)
+
+            values[(point_a, point_b)] = score
+
+    # to_remove = [
+    #     line_pair[1] for line_pair, score in scores.items() if score < 0
+    # ]
+    # return [line for i, line in enumerate(lines) if i not in to_remove]
+    return scores, values
