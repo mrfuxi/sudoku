@@ -4,6 +4,8 @@ import math
 import cv2
 import numpy as np
 
+from visualize import draw_lines
+
 
 def similar_angle(line_a, line_b, min_ang_diff=0.5):
     """
@@ -227,7 +229,7 @@ def fragment_lenghts(binded_lines):
     return distances
 
 
-def fragment_value(image, point_a, point_b, width=4):
+def fragment_value(distance_map, point_a, point_b, width=6):
     """
     Calculates field under a line fragment (no-zero pixels)
     Image should be binary.
@@ -237,9 +239,26 @@ def fragment_value(image, point_a, point_b, width=4):
     rect = zip(point_a, point_b)
     start = min(rect[0]) - w2, max(rect[0]) + w2
     end = min(rect[1]) - w2, max(rect[1]) + w2
-    sub_image = image[end[0]:end[1], start[0]:start[1]]
     dist = distance_between_points(point_a, point_b)
-    return cv2.countNonZero(sub_image)/(dist*width)
+
+    sub_image = distance_map[end[0]:end[1], start[0]:start[1]]
+
+    # sub_image = cv2.distanceTransform(sub_image, cv2.DIST_C, cv2.DIST_MASK_3)
+    # line_img = np.empty_like(sub_image)
+    # line_img.fill(0.0)
+    # cv2.line(line_img, point_a, point_b, color=1.0, thickness=2)
+    # masked_dist = cv2.bitwise_and(sub_image, line_img)
+    # print line_img.shape, point_a, point_b, start, end
+    # masked_dist = sub_image * sub_image_line
+    # _, masked_dist = cv2.threshold(masked_dist, width, 1, cv2.THRESH_BINARY)
+    # print masked_dist.sum(), dist, masked_dist.sum()/dist
+    # print masked_dist.min(), masked_dist.max()
+    # filename = "x/{}-{}x{}-{}.png".format(point_a[0], point_a[1], point_b[0], point_b[1])
+    # mul = 255.0/masked_dist.max()
+    # cv2.imwrite(filename, masked_dist * mul)
+
+    # return cv2.countNonZero(sub_image)/(dist*width)
+    return sub_image.sum()/(dist*width)
 
 
 def valid_fragment_lenghts(binded_lines):
@@ -291,6 +310,14 @@ def remove_disjonted_lines(image, lines):
     """
     binded, points = bind_intersections_to_lines(lines)
 
+    # Line iterator would be better but it's not available in Python binding
+    tmp = visualize.draw_lines(image, lines, thickness=5, rgb=False, draw_on_empty=True)
+    tmp = cv2.bitwise_and(image, tmp)
+    distances = cv2.distanceTransform(tmp, cv2.DIST_C, cv2.DIST_MASK_3)
+
+    # thin_lines = draw_lines(image, lines, color=1, thickness=1, rgb=False, draw_on_empty=True)
+    # distances = cv2.distanceTransform(image, cv2.DIST_C, cv2.DIST_MASK_3)
+
     scores = defaultdict(list)
     values = {}
 
@@ -298,7 +325,7 @@ def remove_disjonted_lines(image, lines):
         for point_a, point_b in zip(line[2], line[2][1:]):
             keys = set(points[point_a]) ^ set(points[point_b])
 
-            score = fragment_value(image, point_a, point_b)
+            score = fragment_value(image, thin_lines, point_a, point_b)
             for key in keys:
                 scores[key].append(score)
 
