@@ -1,4 +1,5 @@
 from collections import OrderedDict, defaultdict
+from itertools import chain
 
 import math
 import cv2
@@ -229,13 +230,12 @@ def fragment_lenghts(binded_lines):
     return distances
 
 
-def fragment_value(distance_map, point_a, point_b, width=6):
+def fragment_value(distance_map, point_a, point_b):
     """
-    Calculates field under a line fragment (no-zero pixels)
-    Image should be binary.
-    Value is adjusted based on how thick line is expected
+    Calculates field under a line fragment (non-zero pixels)
+    Value is adjusted based on length of the fragment
     """
-    w2 = width/2
+    w2 = 2
     rect = zip(point_a, point_b)
     start = min(rect[0]) - w2, max(rect[0]) + w2
     end = min(rect[1]) - w2, max(rect[1]) + w2
@@ -243,22 +243,7 @@ def fragment_value(distance_map, point_a, point_b, width=6):
 
     sub_image = distance_map[end[0]:end[1], start[0]:start[1]]
 
-    # sub_image = cv2.distanceTransform(sub_image, cv2.DIST_C, cv2.DIST_MASK_3)
-    # line_img = np.empty_like(sub_image)
-    # line_img.fill(0.0)
-    # cv2.line(line_img, point_a, point_b, color=1.0, thickness=2)
-    # masked_dist = cv2.bitwise_and(sub_image, line_img)
-    # print line_img.shape, point_a, point_b, start, end
-    # masked_dist = sub_image * sub_image_line
-    # _, masked_dist = cv2.threshold(masked_dist, width, 1, cv2.THRESH_BINARY)
-    # print masked_dist.sum(), dist, masked_dist.sum()/dist
-    # print masked_dist.min(), masked_dist.max()
-    # filename = "x/{}-{}x{}-{}.png".format(point_a[0], point_a[1], point_b[0], point_b[1])
-    # mul = 255.0/masked_dist.max()
-    # cv2.imwrite(filename, masked_dist * mul)
-
-    # return cv2.countNonZero(sub_image)/(dist*width)
-    return sub_image.sum()/(dist*width)
+    return cv2.countNonZero(sub_image)/dist
 
 
 def valid_fragment_lenghts(binded_lines):
@@ -311,12 +296,11 @@ def remove_disjonted_lines(image, lines):
     binded, points = bind_intersections_to_lines(lines)
 
     # Line iterator would be better but it's not available in Python binding
-    tmp = visualize.draw_lines(image, lines, thickness=5, rgb=False, draw_on_empty=True)
-    tmp = cv2.bitwise_and(image, tmp)
-    distances = cv2.distanceTransform(tmp, cv2.DIST_C, cv2.DIST_MASK_3)
-
-    # thin_lines = draw_lines(image, lines, color=1, thickness=1, rgb=False, draw_on_empty=True)
-    # distances = cv2.distanceTransform(image, cv2.DIST_C, cv2.DIST_MASK_3)
+    thick_lines = draw_lines(image, lines, thickness=1, rgb=False, draw_on_empty=True)
+    exact_lines = draw_lines(image, lines, color=1, thickness=1, rgb=False, draw_on_empty=True)
+    thick_lines = cv2.bitwise_and(image, thick_lines)
+    distances = cv2.distanceTransform(thick_lines, cv2.DIST_L1, cv2.DIST_MASK_PRECISE)
+    distances = distances * exact_lines
 
     scores = defaultdict(list)
     values = {}
@@ -325,14 +309,17 @@ def remove_disjonted_lines(image, lines):
         for point_a, point_b in zip(line[2], line[2][1:]):
             keys = set(points[point_a]) ^ set(points[point_b])
 
-            score = fragment_value(image, thin_lines, point_a, point_b)
+            score = fragment_value(distances, point_a, point_b)
             for key in keys:
                 scores[key].append(score)
 
             values[(point_a, point_b)] = score
 
-    # to_remove = [
-    #     line_pair[1] for line_pair, score in scores.items() if score < 0
-    # ]
-    # return [line for i, line in enumerate(lines) if i not in to_remove]
-    return scores, values
+    mean, std = np.mean(values.values()), np.std(values.values())
+    to_remove = []
+    for i, score in scores.items():
+        if len([s for s in score if abs(s - mean) < std]) < 4:
+            to_remove.append(i)
+
+    connected = [line for i, line in enumerate(lines) if i not in to_remove]
+    return connected, values
