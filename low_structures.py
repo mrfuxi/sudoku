@@ -1,5 +1,4 @@
 from collections import OrderedDict, defaultdict
-from itertools import chain
 
 import math
 import cv2
@@ -230,7 +229,7 @@ def fragment_lenghts(binded_lines):
     return distances
 
 
-def fragment_value(distance_map, point_a, point_b):
+def fragment_value(image, point_a, point_b):
     """
     Calculates field under a line fragment (non-zero pixels)
     Value is adjusted based on length of the fragment
@@ -241,7 +240,7 @@ def fragment_value(distance_map, point_a, point_b):
     end = min(rect[1]) - w2, max(rect[1]) + w2
     dist = distance_between_points(point_a, point_b)
 
-    sub_image = distance_map[end[0]:end[1], start[0]:start[1]]
+    sub_image = image[end[0]:end[1], start[0]:start[1]]
 
     return cv2.countNonZero(sub_image)/dist
 
@@ -296,11 +295,10 @@ def remove_disjonted_lines(image, lines):
     binded, points = bind_intersections_to_lines(lines)
 
     # Line iterator would be better but it's not available in Python binding
-    thick_lines = draw_lines(image, lines, thickness=1, rgb=False, draw_on_empty=True)
-    exact_lines = draw_lines(image, lines, color=1, thickness=1, rgb=False, draw_on_empty=True)
+    thick_lines = draw_lines(
+        image, lines, color=255, thickness=2, rgb=False, draw_on_empty=True,
+    )
     thick_lines = cv2.bitwise_and(image, thick_lines)
-    distances = cv2.distanceTransform(thick_lines, cv2.DIST_L1, cv2.DIST_MASK_PRECISE)
-    distances = distances * exact_lines
 
     scores = defaultdict(list)
     values = {}
@@ -309,7 +307,7 @@ def remove_disjonted_lines(image, lines):
         for point_a, point_b in zip(line[2], line[2][1:]):
             keys = set(points[point_a]) ^ set(points[point_b])
 
-            score = fragment_value(distances, point_a, point_b)
+            score = fragment_value(thick_lines, point_a, point_b)
             for key in keys:
                 scores[key].append(score)
 
