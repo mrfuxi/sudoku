@@ -60,3 +60,13 @@ def draw_lines(img, lines, color=None, thickness=2, rgb=True, draw_on_empty=Fals
         cv2.line(cpy, start, end, color, thickness)
 
     return cpy
+
+
+def draw_fragment_values(img, fragments):
+    cpy = np.empty_like(img)
+    cpy.fill(0)
+    m = np.max(fragments.values())
+    for (point_a, point_b), score in fragments.items():
+        cv2.line(cpy, point_a, point_b, int(255*score/m), 5)
+
+    return cpy
