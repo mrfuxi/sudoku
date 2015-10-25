@@ -84,7 +84,7 @@ def intersections(lines, min_ang_diff=0):
     return points
 
 
-def remove_duplicate_lines(lines, min_ang_diff, img_shape):
+def remove_duplicate_lines(lines, min_ang_diff, img_shape, min_dist=3):
     """
     duplicates: crosses in view at low angle
 
@@ -100,6 +100,10 @@ def remove_duplicate_lines(lines, min_ang_diff, img_shape):
 
             similar = similar_angle(line_a, line_b, min_ang_diff)
             if not similar:
+                continue
+
+            if abs(line_a[0] - line_b[0]) < min_dist:
+                to_remove.add(max(i, j))
                 continue
 
             ok, point = intersection(line_a, line_b, min_ang_diff=0)
