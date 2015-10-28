@@ -80,4 +80,4 @@ def find_lines(img, limit=100):
 
         return line
 
-    return map(positive, lines)
+    return map(tuple, map(positive, lines))

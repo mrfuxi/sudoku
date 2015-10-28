@@ -70,3 +70,12 @@ def draw_fragment_values(img, fragments):
         cv2.line(cpy, point_a, point_b, int(255*score/m), 5)
 
     return cpy
+
+
+def draw_fragments(img, fragments, color, width=5):
+    cpy = np.empty_like(img)
+    cpy.fill(0)
+    for point_a, point_b in fragments:
+        cv2.line(cpy, point_a, point_b, color, width)
+
+    return cpy
