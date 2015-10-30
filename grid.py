@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import glob
+from collections import defaultdict
 from os import path, mkdir
 from shutil import rmtree
 
@@ -25,7 +26,7 @@ def point_similarities(expected_points, distances):
     for expected in expected_points:
         point = distances[int(expected)]
         if points:
-            fit += abs(abs(point-points[-1]) - step)
+            fit += 2 ** abs(abs(point-points[-1]) - step)
         points.append(point)
 
     return fit, points
@@ -53,7 +54,7 @@ def prepare_point_distances(points):
 
 def linear_distances(lines, divider_line):
     if len(lines) < 10:
-        return 0.0, []
+        yield 0.0, []
 
     intersections = []
     for line in lines:
@@ -66,9 +67,7 @@ def linear_distances(lines, divider_line):
 
     distances = prepare_point_distances(points)
 
-    best_fit = None
     points_count = len(points)
-    res = []
     for i in range(0, points_count+1-10):
         for j in xrange(i+10, points_count+1):
             start, end = points[i], points[j-1]
@@ -79,41 +78,37 @@ def linear_distances(lines, divider_line):
             if len(set(fit[1])) != 10:
                 continue
 
-            res.append(fit)
-
-            best_fit = min(best_fit, fit) if best_fit is not None else fit
-
-    if not best_fit:
-        return 10**10, []
-
-    score, best_points = best_fit
-    return score, [lines[points.index(point)] for point in best_points]
+            score, selected_points = fit
+            yield score, [lines[points.index(point)] for point in selected_points]
 
 
 def possible_grids(horizontal, vertical):
     vertical = sorted(vertical, key=lambda l: l[0])
     horizontal = sorted(horizontal, key=lambda l: l[0])
 
-    lines_v = []
-    for lines in (linear_distances(vertical, h)[1] for h in horizontal):
-        if lines and lines not in lines_v:
-            lines_v.append(lines)
+    lines_v = defaultdict(float)
+    for fit in (linear_distances(vertical, h) for h in horizontal):
+        for score, line in fit:
+            lines_v[tuple(line)] += score
 
-    lines_h = []
-    for lines in (linear_distances(horizontal, v)[1] for v in vertical):
-        if lines and lines not in lines_h:
-            lines_h.append(lines)
+    lines_h = defaultdict(float)
+    for fit in (linear_distances(horizontal, v) for v in vertical):
+        for score, line in fit:
+            lines_h[tuple(line)] += score
+
+    lines_v = [l for l, s in sorted(lines_v.items(), key=lambda x: x[1])]
+    lines_h = [l for l, s in sorted(lines_h.items(), key=lambda x: x[1])]
 
     grids = []
-    for h in lines_h:
-        for v in lines_v:
+    for h in lines_h[:3]:
+        for v in lines_v[:3]:
             grids.append((h, v))
 
     return grids
 
 
 def evaluate_grids(img, grids):
-    best = (0, None)
+    best = (10**10, None)
     for i, grid in enumerate(grids):
         lines_h, lines_v = grid
         fragments = []
@@ -131,15 +126,17 @@ def evaluate_grids(img, grids):
             img, fragments, color=255, width=2
         )
         masked_image = cv2.bitwise_and(img, fragment_image)
-        score = cv2.countNonZero(masked_image)
+        score = masked_image.sum()
 
-        best = max(best, (score, grid))
+        # max dark ink, so minimize it
+        best = min(best, (score, grid))
 
     return best
 
 
 def find_grid(image):
     img = process.pre_process(image)
+    img_grey = process.gray_image(image)
 
     lines = process.find_lines(img, 100)
     dedup = remove_duplicate_lines(lines, 15, img.shape)
@@ -163,10 +160,10 @@ def find_grid(image):
             continue
 
         grids = possible_grids(horizontal, vertical)
-        score, grid = evaluate_grids(img, grids)
+        score, grid = evaluate_grids(img_grey, grids)
         best = max(best, (score, grid))
 
-    return best[0], best[1], line_class
+    return best
 
 if __name__ == '__main__':
     rmtree(OUTDIR, ignore_errors=True)
@@ -176,7 +173,7 @@ if __name__ == '__main__':
         filename = path.basename(filename)
         print filename
         img = process.get_example_image(filename)
-        score, grid, all_lines = find_grid(img)
+        score, grid = find_grid(img)
 
         if grid:
             result = visualize.draw_lines(img, grid[0] + grid[1], thickness=2)
