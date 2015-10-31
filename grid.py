@@ -26,7 +26,11 @@ def point_similarities(expected_points, distances):
     for expected in expected_points:
         point = distances[int(expected)]
         if points:
-            fit += 2 ** abs(abs(point-points[-1]) - step)
+            f = abs(abs(point-points[-1]) - step)
+            if f >= 0.2 * step:
+                break
+            fit += f
+
         points.append(point)
 
     return fit, points
