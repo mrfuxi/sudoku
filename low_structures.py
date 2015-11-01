@@ -7,18 +7,22 @@ import numpy as np
 from visualize import draw_lines
 
 
-def similar_angle(line_a, line_b, min_ang_diff=0.5):
+def similarly_angled_lines(line_a, line_b, min_ang_diff=0.5):
     """
     lines has to differ by some value
     otherwise intersection is not interesting
     """
-    if min_ang_diff <= 0:
-        return False
-
     th_a = line_a[1]
     th_b = line_b[1]
 
-    ang_diff = np.abs(th_a - th_b)
+    return similar_angles(th_a, th_b, min_ang_diff=min_ang_diff)
+
+
+def similar_angles(angle_a, angle_b, min_ang_diff=0.5):
+    if min_ang_diff <= 0:
+        return False
+
+    ang_diff = np.abs(angle_a - angle_b)
     if ang_diff < min_ang_diff or ang_diff > (np.pi - min_ang_diff):
         return True
     return False
@@ -36,7 +40,7 @@ def intersection(line_a, line_b, min_ang_diff):
     r_a, th_a = line_a
     r_b, th_b = line_b
 
-    if similar_angle(line_a, line_b, min_ang_diff=min_ang_diff):
+    if similarly_angled_lines(line_a, line_b, min_ang_diff=min_ang_diff):
         return False, None
 
     A = np.array([
@@ -98,7 +102,7 @@ def remove_duplicate_lines(lines, min_ang_diff, img_shape, min_dist=3):
             if i <= j:
                 continue
 
-            similar = similar_angle(line_a, line_b, min_ang_diff)
+            similar = similarly_angled_lines(line_a, line_b, min_ang_diff)
             if not similar:
                 continue
 
@@ -181,8 +185,27 @@ def is_angle_in_bucket(angle, ranges):
     return False
 
 
+def lines_with_similar_angle(lines, angle, min_ang_diff):
+    """
+    Splits list of lines into one that are similar to given angle,
+    and the rest of lines
+    """
+
+    similar = []
+    other = []
+
+    for line in lines:
+        if similar_angles(line[1], angle, min_ang_diff=min_ang_diff):
+            similar.append(line)
+        else:
+            other.append(line)
+
+    return similar, other
+
+
 def put_lines_into_buckets(buckets, lines):
     bucketed = []
+    all_matches = set([])
     for bucket_angle, bucket in buckets.iteritems():
         matches = []
 
@@ -190,7 +213,9 @@ def put_lines_into_buckets(buckets, lines):
             if is_angle_in_bucket(line[1], bucket):
                 matches.append(line)
 
-        if matches:
+        matches_key = tuple(matches)
+        if matches and matches_key not in all_matches:
+            all_matches.add(matches_key)
             bucketed.append((bucket_angle, matches))
 
     # sort by most numbers of matches in bucket
@@ -260,13 +285,18 @@ def valid_fragment_lenghts(binded_lines):
     return (avg - sigma*2, avg + sigma*2)
 
 
-def remove_very_close_lines(lines):
+def remove_very_close_lines(lines, img_shape, min_size=10):
     """
     Removes lines that are very close to each other (removes the later one)
     It should be used on lines from orthogonal buckets
     """
     binded, points = bind_intersections_to_lines(lines)
     len_min, len_max = valid_fragment_lenghts(binded)
+
+    # lines has to be enough apart so char will fit
+    # not so much apart that 9 fragments will fit
+    len_min = max(len_min, min_size)
+    len_max = min(len_max, min(img_shape)/9)
 
     scores = defaultdict(int)
 
