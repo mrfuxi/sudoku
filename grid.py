@@ -27,13 +27,13 @@ def point_similarities(expected_points, distances):
         point = distances[int(expected)]
         if points:
             f = abs(abs(point-points[-1]) - step)/step
-            if f >= 0.25:
+            if f >= 0.2:
                 break
             fit += f/9.0
 
         points.append(point)
 
-    return 2**(1-fit), points
+    return (1-fit), points
 
 
 def prepare_point_distances(points):
