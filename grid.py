@@ -26,14 +26,14 @@ def point_similarities(expected_points, distances):
     for expected in expected_points:
         point = distances[int(expected)]
         if points:
-            f = abs(abs(point-points[-1]) - step)
-            if f >= 0.2 * step:
+            f = abs(abs(point-points[-1]) - step)/step
+            if f >= 0.25:
                 break
-            fit += f
+            fit += f/9.0
 
         points.append(point)
 
-    return fit, points
+    return 2**(1-fit), points
 
 
 def prepare_point_distances(points):
@@ -90,30 +90,33 @@ def possible_grids(horizontal, vertical):
     vertical = sorted(vertical, key=lambda l: l[0])
     horizontal = sorted(horizontal, key=lambda l: l[0])
 
-    lines_v = defaultdict(float)
+    lines_v = defaultdict(list)
     for fit in (linear_distances(vertical, h) for h in horizontal):
         for score, line in fit:
-            lines_v[tuple(line)] += score
+            lines_v[tuple(line)].append(score)
 
-    lines_h = defaultdict(float)
+    lines_h = defaultdict(list)
     for fit in (linear_distances(horizontal, v) for v in vertical):
         for score, line in fit:
-            lines_h[tuple(line)] += score
+            lines_h[tuple(line)].append(score)
 
-    lines_v = [l for l, s in sorted(lines_v.items(), key=lambda x: x[1])]
-    lines_h = [l for l, s in sorted(lines_h.items(), key=lambda x: x[1])]
+    def _mean(x):
+        return sum(x)/len(x)
+
+    lines_v = [(l, _mean(s)) for l, s in sorted(lines_v.items(), key=lambda x: _mean(x[1]), reverse=True)]
+    lines_h = [(l, _mean(s)) for l, s in sorted(lines_h.items(), key=lambda x: _mean(x[1]), reverse=True)]
 
     grids = []
-    for h in lines_h[:3]:
-        for v in lines_v[:3]:
-            grids.append((h, v))
+    for h, hs in lines_h[:3]:
+        for v, vs in lines_v[:3]:
+            grids.append((hs*vs, (h, v)))
 
     return grids
 
 
 def evaluate_grids(img, grids):
     best = (10**10, None)
-    for i, grid in enumerate(grids):
+    for i, (line_score, grid) in enumerate(grids):
         lines_h, lines_v = grid
         fragments = []
         for h in lines_h:
@@ -133,7 +136,7 @@ def evaluate_grids(img, grids):
         score = masked_image.sum()
 
         # max dark ink, so minimize it
-        best = min(best, (score, grid))
+        best = min(best, (score*line_score, grid))
 
     return best
 
