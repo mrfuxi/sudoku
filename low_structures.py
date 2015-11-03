@@ -12,6 +12,9 @@ def similarly_angled_lines(line_a, line_b, min_ang_diff=0.5):
     lines has to differ by some value
     otherwise intersection is not interesting
     """
+    if not min_ang_diff:
+        return False
+
     th_a = line_a[1]
     th_b = line_b[1]
 
@@ -40,16 +43,15 @@ def intersection(line_a, line_b, min_ang_diff):
     r_a, th_a = line_a
     r_b, th_b = line_b
 
-    if similarly_angled_lines(line_a, line_b, min_ang_diff=min_ang_diff):
-        return False, None
-
     A = np.array([
         [np.cos(th_a), np.sin(th_a)],
         [np.cos(th_b), np.sin(th_b)],
     ])
     b = np.array([r_a, r_b])
     ok, point = cv2.solve(A, b)
-    return ok, tuple(x[0] for x in point)
+    if ok:
+        point = (point[0][0], point[1][0])
+    return ok, point
 
 
 def point_in_view(point, img_shape, scope=0.5):

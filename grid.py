@@ -38,20 +38,22 @@ def point_similarities(expected_points, distances):
 
 def prepare_point_distances(points):
     max_p = points[-1]
-    distances = [(max_p, max_p)] * int(max_p+1)
+    ld = int(max_p+1)
+    distances = [(max_p, max_p)] * ld
     for point in points:
         idx = int(point)
         distances[idx] = (0, point)
-        for i in xrange(1, int(max_p)):
-            try:
-                distances[idx - i] = min((i, point), distances[idx - i])
-            except IndexError:
-                pass
+        for i in xrange(1, idx+1):
+            if (i, point) < distances[idx - i]:
+                distances[idx - i] = (i, point)
+            else:
+                break
 
-            try:
-                distances[idx + i] = min((i, point), distances[idx + i])
-            except IndexError:
-                pass
+        for i in xrange(1, ld - idx):
+            if (i, point) < distances[idx + i]:
+                distances[idx + i] = (i, point)
+            else:
+                break
 
     return [d[1] for d in distances]
 
