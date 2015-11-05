@@ -7,31 +7,43 @@ import numpy as np
 from visualize import draw_lines
 
 
-def similarly_angled_lines(line_a, line_b, min_ang_diff=0.5):
+class orderless_memoized(object):
+    def __init__(self, func):
+        self.func = func
+        self.cache = {}
+
+    def __call__(self, *args):
+        key = frozenset(args)
+        try:
+            value = self.cache[key]
+        except KeyError:
+            value = self.func(*args)
+            self.cache[key] = value
+        return value
+
+
+def similarly_angled_lines(line_a, line_b):
     """
     lines has to differ by some value
     otherwise intersection is not interesting
     """
-    if not min_ang_diff:
-        return False
-
     th_a = line_a[1]
     th_b = line_b[1]
 
-    return similar_angles(th_a, th_b, min_ang_diff=min_ang_diff)
+    return similar_angles(th_a, th_b)
 
 
-def similar_angles(angle_a, angle_b, min_ang_diff=0.5):
-    if min_ang_diff <= 0:
-        return False
+@orderless_memoized
+def similar_angles(angle_a, angle_b):
+    min_ang_diff = 0.5  # ~28deg
 
-    ang_diff = np.abs(angle_a - angle_b)
+    ang_diff = abs(angle_a - angle_b)
     if ang_diff < min_ang_diff or ang_diff > (np.pi - min_ang_diff):
         return True
     return False
 
 
-def intersection(line_a, line_b, min_ang_diff):
+def intersection(line_a, line_b):
     """
     Solve:
     x*cos(th_a) + y*sin(th_a) = r_a
@@ -72,7 +84,7 @@ def point_in_view(point, img_shape, scope=0.5):
     )
 
 
-def intersections(lines, min_ang_diff=0):
+def intersections(lines):
     points = {}
 
     for i, line_a in enumerate(lines):
@@ -80,7 +92,7 @@ def intersections(lines, min_ang_diff=0):
             if i <= j:
                 continue
 
-            ok, point = intersection(line_a, line_b, min_ang_diff)
+            ok, point = intersection(line_a, line_b)
             if not ok:
                 continue
 
@@ -90,21 +102,21 @@ def intersections(lines, min_ang_diff=0):
     return points
 
 
-def remove_duplicate_lines(lines, min_ang_diff, img_shape, min_dist=3):
+def remove_duplicate_lines(lines, img_shape, min_dist=3):
     """
     duplicates: crosses in view at low angle
-
-    min_ang_diff: angle in deg
     """
-    min_ang_diff = np.deg2rad(min_ang_diff)
+    w, h = img_shape
+    scope = 0.5
+    min_x = 0 - w*scope
+    min_y = 0 - h*scope
+    max_x = w + w*scope
+    max_y = h + h*scope
 
     to_remove = set([])
     for i, line_a in enumerate(lines):
-        for j, line_b in enumerate(lines):
-            if i <= j:
-                continue
-
-            similar = similarly_angled_lines(line_a, line_b, min_ang_diff)
+        for j, line_b in enumerate(lines[i+1:], i+1):
+            similar = similarly_angled_lines(line_a, line_b)
             if not similar:
                 continue
 
@@ -112,11 +124,15 @@ def remove_duplicate_lines(lines, min_ang_diff, img_shape, min_dist=3):
                 to_remove.add(max(i, j))
                 continue
 
-            ok, point = intersection(line_a, line_b, min_ang_diff=0)
+            ok, point = intersection(line_a, line_b)
             if not ok:
                 continue
 
-            in_view = point_in_view(point, img_shape)
+            x, y = point
+            in_view = (
+                min_x <= x <= max_x and
+                min_y <= y <= max_y
+            )
 
             if in_view:
                 to_remove.add(max(i, j))
@@ -187,7 +203,7 @@ def is_angle_in_bucket(angle, ranges):
     return False
 
 
-def lines_with_similar_angle(lines, angle, min_ang_diff):
+def lines_with_similar_angle(lines, angle):
     """
     Splits list of lines into one that are similar to given angle,
     and the rest of lines
@@ -197,7 +213,7 @@ def lines_with_similar_angle(lines, angle, min_ang_diff):
     other = []
 
     for line in lines:
-        if similar_angles(line[1], angle, min_ang_diff=min_ang_diff):
+        if similar_angles(line[1], angle):
             similar.append(line)
         else:
             other.append(line)

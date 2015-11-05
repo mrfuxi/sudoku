@@ -64,7 +64,7 @@ def linear_distances(lines, divider_line):
 
     intersections = []
     for line in lines:
-        _, point = intersection(line, divider_line, min_ang_diff=None)
+        _, point = intersection(line, divider_line)
         intersections.append(point)
 
     points = []
@@ -122,13 +122,13 @@ def evaluate_grids(img, grids):
         lines_h, lines_v = grid
         fragments = []
         for h in lines_h:
-            _, point_a = intersection(h, lines_v[0], min_ang_diff=None)
-            _, point_b = intersection(h, lines_v[-1], min_ang_diff=None)
+            _, point_a = intersection(h, lines_v[0])
+            _, point_b = intersection(h, lines_v[-1])
             fragments.append((point_a, point_b))
 
         for v in lines_v:
-            _, point_a = intersection(v, lines_h[0], min_ang_diff=None)
-            _, point_b = intersection(v, lines_h[-1], min_ang_diff=None)
+            _, point_a = intersection(v, lines_h[0])
+            _, point_b = intersection(v, lines_h[-1])
             fragments.append((point_a, point_b))
 
         fragment_image = visualize.draw_fragments(
@@ -148,7 +148,7 @@ def find_grid(image):
     img_grey = process.gray_image(image)
 
     lines = process.find_lines(img, 100)
-    dedup = remove_duplicate_lines(lines, 15, img.shape)
+    dedup = remove_duplicate_lines(lines, img.shape)
 
     bucket_size = 90.0/5.0
     buckets = generate_angle_buckets(
@@ -163,7 +163,7 @@ def find_grid(image):
         if len(line_class) < 20:
             continue
 
-        vertical, horizontal = lines_with_similar_angle(line_class, angle, 0.5)
+        vertical, horizontal = lines_with_similar_angle(line_class, angle)
 
         if len(vertical) < 10 or len(horizontal) < 10:
             continue
