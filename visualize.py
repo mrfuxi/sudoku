@@ -2,6 +2,29 @@ import cv2
 import numpy as np
 
 
+def _prepare_image(img, color, rgb, draw_on_empty, default_color=None):
+    if draw_on_empty:
+        cpy = np.empty_like(img)
+        cpy.fill(0)
+    else:
+        cpy = img.copy()
+
+    if rgb:
+        if not color:
+            color = default_color or (0, 255, 0)
+
+        if len(cpy.shape) == 2:
+            cpy = cv2.cvtColor(cpy, cv2.COLOR_GRAY2RGB)
+
+    elif not color:
+        color = 255
+
+    if cpy.max() <= 1:
+        cpy *= 255
+
+    return cpy, color
+
+
 def draw_points(img, points):
     """
     Draws lines intersections.
@@ -22,24 +45,7 @@ def draw_lines(img, lines, color=None, thickness=2, rgb=True, draw_on_empty=Fals
     Draws lines on image.
     To visualize state of processing
     """
-    if draw_on_empty:
-        cpy = np.empty_like(img)
-        cpy.fill(0)
-    else:
-        cpy = img.copy()
-
-    if rgb:
-        if not color:
-            color = (0, 255, 0)
-
-        if len(cpy.shape) == 2:
-            cpy = cv2.cvtColor(cpy, cv2.COLOR_GRAY2RGB)
-
-    elif not color:
-        color = 255
-
-    if cpy.max() <= 1:
-        cpy *= 255
+    cpy, color = _prepare_image(img, color, rgb, draw_on_empty)
 
     img_rect = (0, 0, img.shape[1], img.shape[0])
 

@@ -3,6 +3,7 @@ import glob
 from collections import defaultdict
 from os import path, mkdir
 from shutil import rmtree
+import numpy as np
 
 import process
 from low_structures import (
@@ -89,8 +90,8 @@ def linear_distances(lines, divider_line):
 
 
 def possible_grids(horizontal, vertical):
-    vertical = sorted(vertical, key=lambda l: l[0])
-    horizontal = sorted(horizontal, key=lambda l: l[0])
+    vertical.sort()
+    horizontal.sort()
 
     lines_v = defaultdict(list)
     for fit in (linear_distances(vertical, h) for h in horizontal):
@@ -102,11 +103,8 @@ def possible_grids(horizontal, vertical):
         for score, line in fit:
             lines_h[tuple(line)].append(score)
 
-    def _mean(x):
-        return sum(x)/len(x)
-
-    lines_v = [(l, _mean(s)) for l, s in sorted(lines_v.items(), key=lambda x: _mean(x[1]), reverse=True)]
-    lines_h = [(l, _mean(s)) for l, s in sorted(lines_h.items(), key=lambda x: _mean(x[1]), reverse=True)]
+    lines_v = [(l, np.mean(s)) for l, s in lines_v.items()]
+    lines_h = [(l, np.mean(s)) for l, s in lines_h.items()]
 
     grids = []
     for h, hs in lines_h[:3]:
