@@ -1,10 +1,8 @@
-from collections import OrderedDict, defaultdict
+from collections import OrderedDict
 
 import math
 import cv2
 import numpy as np
-
-from visualize import draw_lines
 
 
 class orderless_memoized(object):
@@ -64,24 +62,6 @@ def intersection(line_a, line_b):
     if ok:
         point = (point[0][0], point[1][0])
     return ok, point
-
-
-def point_in_view(point, img_shape, scope=0.5):
-    """
-    scope: padding to size. 0.5 = 50%
-    """
-    w, h = img_shape
-    x, y = point
-
-    min_x = 0 - w*scope
-    min_y = 0 - h*scope
-    max_x = w + w*scope
-    max_y = h + h*scope
-
-    return (
-        min_x <= x <= max_x and
-        min_y <= y <= max_y
-    )
 
 
 def intersections(lines):
@@ -241,135 +221,7 @@ def put_lines_into_buckets(buckets, lines):
     return bucketed
 
 
-def bind_intersections_to_lines(lines):
-    binded = [
-        [angle, distance, []] for angle, distance in lines
-    ]
-    points = intersections(lines, np.deg2rad(45))
-    for (line_a, line_b), point in points.items():
-        binded[line_a][2].append(point)
-        binded[line_b][2].append(point)
-
-    for line in binded:
-        line[2] = sorted(line[2])
-
-    # reverse keys with values in dict
-    # values (points) will be unique
-    points_to_lines = {point: lines for lines, point in points.items()}
-
-    return binded, points_to_lines
-
-
 def distance_between_points(point_a, point_b):
     return math.sqrt(
         (point_a[0]-point_b[0])**2 + (point_a[1]-point_b[1])**2
     )
-
-
-def fragment_lenghts(binded_lines):
-    distances = []
-    for distance, angle, points in binded_lines:
-        for point_a, point_b in zip(points, points[1:]):
-            dist = distance_between_points(point_a, point_b)
-            distances.append(dist)
-
-    return distances
-
-
-def fragment_value(image, point_a, point_b):
-    """
-    Calculates field under a line fragment (non-zero pixels)
-    Value is adjusted based on length of the fragment
-    """
-    w2 = 2
-    rect = zip(point_a, point_b)
-    start = min(rect[0]) - w2, max(rect[0]) + w2
-    end = min(rect[1]) - w2, max(rect[1]) + w2
-    dist = distance_between_points(point_a, point_b)
-
-    sub_image = image[end[0]:end[1], start[0]:start[1]]
-
-    return cv2.countNonZero(sub_image)/dist
-
-
-def valid_fragment_lenghts(binded_lines):
-    """
-    Calculates average distance between consecutive points on the line/grid
-    """
-    lengths = fragment_lenghts(binded_lines)
-    avg = np.mean(lengths)
-    sigma = np.std(lengths)
-
-    return (avg - sigma*2, avg + sigma*2)
-
-
-def remove_very_close_lines(lines, img_shape, min_size=10):
-    """
-    Removes lines that are very close to each other (removes the later one)
-    It should be used on lines from orthogonal buckets
-    """
-    binded, points = bind_intersections_to_lines(lines)
-    len_min, len_max = valid_fragment_lenghts(binded)
-
-    # lines has to be enough apart so char will fit
-    # not so much apart that 9 fragments will fit
-    len_min = max(len_min, min_size)
-    len_max = min(len_max, min(img_shape)/9)
-
-    scores = defaultdict(int)
-
-    for i, line in enumerate(binded):
-        for point_a, point_b in zip(line[2], line[2][1:]):
-            dist = distance_between_points(point_a, point_b)
-            score = 1
-            if dist < len_min or len_max < dist:
-                score = -1
-
-            key = tuple(
-                sorted(
-                    set(points[point_a]) ^ set(points[point_b])
-                )
-            )
-
-            scores[key] += score
-
-    to_remove = [
-        line_pair[1] for line_pair, score in scores.items() if score < 0
-    ]
-    return [line for i, line in enumerate(lines) if i not in to_remove]
-
-
-def remove_disjonted_lines(image, lines):
-    """
-    Removes lines that are very close to each other (removes the later one)
-    It should be used on lines from orthogonal buckets
-    """
-    binded, points = bind_intersections_to_lines(lines)
-
-    # Line iterator would be better but it's not available in Python binding
-    thick_lines = draw_lines(
-        image, lines, color=255, thickness=2, rgb=False, draw_on_empty=True,
-    )
-    thick_lines = cv2.bitwise_and(image, thick_lines)
-
-    scores = defaultdict(list)
-    values = {}
-
-    for i, line in enumerate(binded):
-        for point_a, point_b in zip(line[2], line[2][1:]):
-            keys = set(points[point_a]) ^ set(points[point_b])
-
-            score = fragment_value(thick_lines, point_a, point_b)
-            for key in keys:
-                scores[key].append(score)
-
-            values[(point_a, point_b)] = score
-
-    mean, std = np.mean(values.values()), np.std(values.values())
-    to_remove = []
-    for i, score in scores.items():
-        if len([s for s in score if abs(s - mean) < std]) < 4:
-            to_remove.append(i)
-
-    connected = [line for i, line in enumerate(lines) if i not in to_remove]
-    return connected, values
