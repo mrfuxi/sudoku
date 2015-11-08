@@ -141,7 +141,7 @@ def evaluate_grids(img, grids):
     return best
 
 
-def find_grid(image):
+def find_grid(image, fn):
     img = process.pre_process(image)
     img_grey = process.gray_image(image)
 
@@ -176,14 +176,22 @@ if __name__ == '__main__':
     rmtree(OUTDIR, ignore_errors=True)
     mkdir(OUTDIR)
 
+    from time import time
+
+    x = 4
+    x = 0
+    x = 5
     for filename in sorted(glob.glob('examples/*.png')):
+    # for filename in sorted(glob.glob('examples/*.png'))[x:x+1]:
         filename = path.basename(filename)
-        print filename
         img = process.get_example_image(filename)
-        score, grid = find_grid(img)
+        t0 = time()
+        score, grid = find_grid(img, filename)
+        t1 = time()
+        print t1-t0
 
         if grid:
             result = visualize.draw_lines(img, grid[0] + grid[1], thickness=2)
             cv2.imwrite("{}/{}".format(OUTDIR, filename), result)
         else:
-            print "No grid found"
+            print "No grid found", filename
