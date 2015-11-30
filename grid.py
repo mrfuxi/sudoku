@@ -172,6 +172,28 @@ def find_grid(image, fn):
 
     return best
 
+
+def grid_corners(horizontal, vertical):
+    h1 = horizontal[0]
+    h2 = horizontal[-1]
+    v1 = vertical[0]
+    v2 = vertical[-1]
+    return (
+        intersection(h1, v1)[1],
+        intersection(h1, v2)[1],
+        intersection(h2, v2)[1],
+        intersection(h2, v1)[1],
+    )
+
+
+def cut_grid(img, grid, size=400):
+    corners = np.array(grid_corners(*grid))
+    quad_pts = np.array([(0, 0), (size, 0), (size, size), (0, size)], dtype=np.float32)
+    transmtx = cv2.getPerspectiveTransform(corners, quad_pts)
+    img_cut = cv2.warpPerspective(img, transmtx, (size, size))
+    return img_cut
+
+
 if __name__ == '__main__':
     rmtree(OUTDIR, ignore_errors=True)
     mkdir(OUTDIR)
@@ -191,6 +213,8 @@ if __name__ == '__main__':
         print t1-t0
 
         if grid:
+            cut = cut_grid(img, grid)
+            cv2.imwrite("{}/cut_{}".format(OUTDIR, filename), cut)
             result = visualize.draw_lines(img, grid[0] + grid[1], thickness=2)
             cv2.imwrite("{}/{}".format(OUTDIR, filename), result)
         else:
