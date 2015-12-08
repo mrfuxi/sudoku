@@ -173,11 +173,20 @@ def find_grid(image, fn):
     return best
 
 
-def grid_corners(horizontal, vertical):
-    h1 = horizontal[0]
-    h2 = horizontal[-1]
-    v1 = vertical[0]
-    v2 = vertical[-1]
+def grid_corners(grid, row=None, col=None):
+    if not row:
+        row = (0, -1)
+
+    if not col:
+        col = (0, -1)
+
+    horizontal, vertical = grid
+
+    h1 = horizontal[row[0]]
+    h2 = horizontal[row[1]]
+    v1 = vertical[col[0]]
+    v2 = vertical[col[1]]
+
     return (
         intersection(h1, v1)[1],
         intersection(h1, v2)[1],
@@ -186,13 +195,24 @@ def grid_corners(horizontal, vertical):
     )
 
 
-def cut_grid(img, grid, size=400):
-    corners = np.array(grid_corners(*grid))
+def cut_square_from_image(img, corners, size):
     quad_pts = np.array([(0, 0), (size, 0), (size, size), (0, size)], dtype=np.float32)
     transmtx = cv2.getPerspectiveTransform(corners, quad_pts)
-    img_cut = cv2.warpPerspective(img, transmtx, (size, size))
-    return img_cut
+    return cv2.warpPerspective(img, transmtx, (size, size))
 
+
+def cut_grid(img, grid, size=360):
+    corners = np.array(grid_corners(grid))
+    return cut_square_from_image(img, corners, size)
+
+
+def cut_cells_from_grid(img, grid, size=40):
+    cells = []
+    for row in range(0, 9):
+        for col in range(0, 9):
+            corners = np.array(grid_corners(grid, row=(row, row+1), col=(col, col+1)))
+            cells.append(cut_square_from_image(img, corners, size))
+    return cells
 
 if __name__ == '__main__':
     rmtree(OUTDIR, ignore_errors=True)
@@ -200,22 +220,21 @@ if __name__ == '__main__':
 
     from time import time
 
-    x = 4
-    x = 0
-    x = 5
     for filename in sorted(glob.glob('examples/*.png')):
-    # for filename in sorted(glob.glob('examples/*.png'))[x:x+1]:
         filename = path.basename(filename)
         img = process.get_example_image(filename)
         t0 = time()
         score, grid = find_grid(img, filename)
-        t1 = time()
-        print t1-t0
 
         if grid:
             cut = cut_grid(img, grid)
             cv2.imwrite("{}/cut_{}".format(OUTDIR, filename), cut)
             result = visualize.draw_lines(img, grid[0] + grid[1], thickness=2)
             cv2.imwrite("{}/{}".format(OUTDIR, filename), result)
+            for i, cell in enumerate(cut_cells_from_grid(img, grid)):
+                cv2.imwrite("{}/cell_{}_{}".format(OUTDIR, i, filename), cell)
         else:
             print "No grid found", filename
+
+        t1 = time()
+        print t1-t0
