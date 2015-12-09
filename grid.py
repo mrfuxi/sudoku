@@ -206,12 +206,15 @@ def cut_grid(img, grid, size=360):
     return cut_square_from_image(img, corners, size)
 
 
-def cut_cells_from_grid(img, grid, size=40):
+def cut_cells_from_grid(img, grid, size=32):
+    grey_img = process.gray_image(img)
     cells = []
     for row in range(0, 9):
         for col in range(0, 9):
             corners = np.array(grid_corners(grid, row=(row, row+1), col=(col, col+1)))
-            cells.append(cut_square_from_image(img, corners, size))
+            cell = cut_square_from_image(grey_img, corners, size)
+            _, cell = cv2.threshold(cell, 0, 255, cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+            cells.append(cell)
     return cells
 
 if __name__ == '__main__':
