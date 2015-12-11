@@ -217,6 +217,18 @@ def cut_cells_from_grid(img, grid, size=32):
             cells.append(cell)
     return cells
 
+
+def cell_to_feature_vector(cell, size=4):
+    features = []
+    cell_size = cell.shape[0]
+
+    for i in range(0, cell_size, size):
+        for j in range(0, cell_size, size):
+            features.append(cell[i:i+size, j:j+size].count_nonzero())
+            print features[-1]
+
+    return features
+
 if __name__ == '__main__':
     rmtree(OUTDIR, ignore_errors=True)
     mkdir(OUTDIR)
@@ -236,6 +248,7 @@ if __name__ == '__main__':
             cv2.imwrite("{}/{}".format(OUTDIR, filename), result)
             for i, cell in enumerate(cut_cells_from_grid(img, grid)):
                 cv2.imwrite("{}/cell_{}_{}".format(OUTDIR, i, filename), cell)
+            cell_to_feature_vector(cell)
         else:
             print "No grid found", filename
 
