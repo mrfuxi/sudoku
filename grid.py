@@ -224,8 +224,8 @@ def cell_to_feature_vector(cell, size=4):
 
     for i in range(0, cell_size, size):
         for j in range(0, cell_size, size):
-            features.append(cell[i:i+size, j:j+size].count_nonzero())
-            print features[-1]
+            region = cell[i:i+size, j:j+size]
+            features.append(size*size - np.count_nonzero(region))
 
     return features
 
