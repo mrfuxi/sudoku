@@ -4,6 +4,7 @@ from collections import defaultdict
 from os import path, mkdir
 from shutil import rmtree
 import numpy as np
+from PIL import Image
 
 import process
 from low_structures import (
@@ -16,6 +17,7 @@ from low_structures import (
 )
 import visualize
 import cv2
+from pytesseract import image_to_string
 
 OUTDIR = 'example_out'
 
@@ -206,14 +208,17 @@ def cut_grid(img, grid, size=360):
     return cut_square_from_image(img, corners, size)
 
 
-def cut_cells_from_grid(img, grid, size=32):
+def cut_cells_from_grid(img, grid, size=32, margin=5):
     grey_img = process.gray_image(img)
     cells = []
     for row in range(0, 9):
         for col in range(0, 9):
             corners = np.array(grid_corners(grid, row=(row, row+1), col=(col, col+1)))
-            cell = cut_square_from_image(grey_img, corners, size)
+            cell = cut_square_from_image(grey_img, corners, size+margin*2)
             _, cell = cv2.threshold(cell, 0, 255, cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+            if margin:
+                cell = cell[margin:size+margin, margin:size+margin]
+
             cells.append(cell)
     return cells
 
@@ -246,11 +251,18 @@ if __name__ == '__main__':
             cv2.imwrite("{}/cut_{}".format(OUTDIR, filename), cut)
             result = visualize.draw_lines(img, grid[0] + grid[1], thickness=2)
             cv2.imwrite("{}/{}".format(OUTDIR, filename), result)
+            digits = []
             for i, cell in enumerate(cut_cells_from_grid(img, grid)):
-                cv2.imwrite("{}/cell_{}_{}".format(OUTDIR, i, filename), cell)
-            cell_to_feature_vector(cell)
+                cell_fn = "{}/cell_{}_{}".format(OUTDIR, i, filename)
+                cv2.imwrite(cell_fn, cell)
+                digit = image_to_string(
+                    Image.open(cell_fn), config="-psm 10 sudoku"
+                )
+                digits.append(digit or ' ')
+            for i in range(0, 9*9, 9):
+                print " ".join(digits[i:i+9])
         else:
             print "No grid found", filename
 
         t1 = time()
-        print t1-t0
+        print t1-t0, filename
