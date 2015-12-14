@@ -234,6 +234,19 @@ def cell_to_feature_vector(cell, size=4):
 
     return features
 
+
+def grid_to_digits(img, grid):
+    digits = []
+    for cell in cut_cells_from_grid(img, grid):
+        digit = image_to_string(
+            Image.fromarray(np.uint8(cell)),
+            config="-psm 10 sudoku"
+        )
+        digits.append(digit or ' ')
+
+    return digits
+
+
 if __name__ == '__main__':
     rmtree(OUTDIR, ignore_errors=True)
     mkdir(OUTDIR)
@@ -251,14 +264,7 @@ if __name__ == '__main__':
             cv2.imwrite("{}/cut_{}".format(OUTDIR, filename), cut)
             result = visualize.draw_lines(img, grid[0] + grid[1], thickness=2)
             cv2.imwrite("{}/{}".format(OUTDIR, filename), result)
-            digits = []
-            for i, cell in enumerate(cut_cells_from_grid(img, grid)):
-                cell_fn = "{}/cell_{}_{}".format(OUTDIR, i, filename)
-                cv2.imwrite(cell_fn, cell)
-                digit = image_to_string(
-                    Image.open(cell_fn), config="-psm 10 sudoku"
-                )
-                digits.append(digit or ' ')
+            digits = grid_to_digits(img, grid)
             for i in range(0, 9*9, 9):
                 print " ".join(digits[i:i+9])
         else:
