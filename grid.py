@@ -242,10 +242,19 @@ def grid_to_digits(img, grid):
             Image.fromarray(np.uint8(cell)),
             config="-psm 10 sudoku"
         )
-        digits.append(digit or ' ')
+        digits.append(digit)
 
     return digits
 
+
+def print_sudoku(digits):
+    digits = [d or ' ' for d in digits]
+    for i in range(0, 9*9, 9):
+        if i % 27 == 0:
+            print '+-----+-----+-----+'
+        print '|{} {} {}|{} {} {}|{} {} {}|'.format(*digits[i:i+9])
+
+    print '+-----+-----+-----+'
 
 if __name__ == '__main__':
     rmtree(OUTDIR, ignore_errors=True)
@@ -265,8 +274,7 @@ if __name__ == '__main__':
             result = visualize.draw_lines(img, grid[0] + grid[1], thickness=2)
             cv2.imwrite("{}/{}".format(OUTDIR, filename), result)
             digits = grid_to_digits(img, grid)
-            for i in range(0, 9*9, 9):
-                print " ".join(digits[i:i+9])
+            print_sudoku(digits)
         else:
             print "No grid found", filename
 
