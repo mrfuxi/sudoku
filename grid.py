@@ -17,7 +17,7 @@ from low_structures import (
 )
 import visualize
 import cv2
-from pytesseract import image_to_string
+from tesserwrap import Tesseract
 
 OUTDIR = 'example_out'
 
@@ -237,11 +237,17 @@ def cell_to_feature_vector(cell, size=4):
 
 def grid_to_digits(img, grid):
     digits = []
+    ocr = Tesseract('/usr/share/tesseract-ocr/tessdata/', 'eng')
+    ocr.set_page_seg_mode(10)
+    ocr.set_variable('tessedit_char_whitelist', '123456789')
+
     for cell in cut_cells_from_grid(img, grid):
-        digit = image_to_string(
-            Image.fromarray(np.uint8(cell)),
-            config="-psm 10 sudoku"
+        digit = ocr.ocr_image(
+            Image.fromarray(np.uint8(cell))
         )
+        digit = digit.strip()
+        if len(digit) > 1:
+            digit = ''
         digits.append(digit)
 
     return digits
