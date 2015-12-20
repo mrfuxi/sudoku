@@ -1,3 +1,2 @@
 ipdb
-pytesseract
 tesserwrap

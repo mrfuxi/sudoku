@@ -262,6 +262,7 @@ def print_sudoku(digits):
 
     print '+-----+-----+-----+'
 
+
 if __name__ == '__main__':
     rmtree(OUTDIR, ignore_errors=True)
     mkdir(OUTDIR)
