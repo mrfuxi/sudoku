@@ -223,18 +223,6 @@ def cut_cells_from_grid(img, grid, size=32, margin=5):
     return cells
 
 
-def cell_to_feature_vector(cell, size=4):
-    features = []
-    cell_size = cell.shape[0]
-
-    for i in range(0, cell_size, size):
-        for j in range(0, cell_size, size):
-            region = cell[i:i+size, j:j+size]
-            features.append(size*size - np.count_nonzero(region))
-
-    return features
-
-
 def grid_to_digits(img, grid):
     digits = []
     ocr = Tesseract('/usr/share/tesseract-ocr/tessdata/', 'eng')
