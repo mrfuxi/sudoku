@@ -268,6 +268,10 @@ if __name__ == '__main__':
             cv2.imwrite("{}/cut_{}".format(OUTDIR, filename), cut)
             result = visualize.draw_lines(img, grid[0] + grid[1], thickness=2)
             cv2.imwrite("{}/{}".format(OUTDIR, filename), result)
+
+            for i, cell in enumerate(cut_cells_from_grid(img, grid)):
+                cv2.imwrite("{}/cell_{}_{}".format(OUTDIR, i, filename), cell)
+
             digits = grid_to_digits(img, grid)
             print_sudoku(digits)
         else:
