@@ -5,8 +5,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get install -y software-properties-common
 RUN add-apt-repository -y ppa:amarburg/opencv3
 RUN apt-get update
-RUN apt-get install -y python-opencv3 python-pip python-dev
-RUN apt-get install -y tesseract-ocr-eng libtesseract-dev python-pil
+RUN apt-get install -y python-opencv3 python-pip python-dev tesseract-ocr-eng libtesseract-dev python-pil
 
 RUN mkdir /code
 WORKDIR /code
