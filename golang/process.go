@@ -66,18 +66,22 @@ func imageToMatrix(src image.Gray) (dst *mat64.Dense) {
 
 func matrixToImage(src *mat64.Dense) (dst image.Gray) {
 	rows, cols := src.Dims()
+	mult := 1.0
+	if mat64.Max(src) <= 1.0 {
+		mult = 255.0
+	}
 	dst = *image.NewGray(image.Rect(0, 0, cols, rows))
 	for col := 0; col < cols; col++ {
 		for row := 0; row < rows; row++ {
 			srcColor := src.At(row, col)
-			dst.SetGray(col, row, color.Gray{uint8(srcColor)})
+			dst.SetGray(col, row, color.Gray{uint8(srcColor * mult)})
 		}
 	}
 	return dst
 }
 
 // Initial threshold to get binary image
-func binarize(src *mat64.Dense) (dst *mat64.Dense, err error) {
+func binarize(src *mat64.Dense) (dst *mat64.Dense) {
 	rows, cols := src.Dims()
 	max := rows
 	if cols > max {
@@ -89,7 +93,23 @@ func binarize(src *mat64.Dense) (dst *mat64.Dense, err error) {
 		window += 1
 	}
 
-	return AdaptiveThreshold(src, 255, ThreshBinaryInv, window, 0)
+	return AdaptiveThreshold(src, 1, ThreshBinaryInv, window, 0)
+}
+
+// Removes body of regions over 1/20 of image width/height
+func removeBlobsBody(src *mat64.Dense) (dst *mat64.Dense) {
+	_, cols := src.Dims()
+	max := cols
+	if cols > max {
+		max = cols
+	}
+
+	window := max / 20
+	if window%2 == 0 {
+		window += 1
+	}
+
+	return AdaptiveThreshold(src, 1, ThreshBinary, window, -0.5)
 }
 
 func main() {
@@ -113,16 +133,14 @@ func main() {
 	mat := imageToMatrix(gray)
 
 	t0 := time.Now()
-	bin, err := binarize(mat)
-	if err != nil {
-		fmt.Println(err)
-	}
+	binary := binarize(mat)
+	deblobbed := removeBlobsBody(binary)
 	t1 := time.Now()
 	fmt.Printf("The call took %v to run.\n", t1.Sub(t0))
 
-	i := matrixToImage(bin)
-	err = saveImage(&i, "t.png")
-	if err != nil {
-		fmt.Println(err)
-	}
+	i := matrixToImage(binary)
+	saveImage(&i, "b.png")
+
+	j := matrixToImage(deblobbed)
+	saveImage(&j, "d.png")
 }

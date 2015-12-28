@@ -38,7 +38,7 @@ func meanMat(row, rows, col, cols, delta, ksize int, src *mat64.Dense) (m float6
 	return sum / float64(rowNum*colNum)
 }
 
-func boxFilter(src *mat64.Dense, ksize int) (dst *mat64.Dense) {
+func meanFilter(src *mat64.Dense, ksize int) (dst *mat64.Dense) {
 	var wg sync.WaitGroup
 	rows, cols := src.Dims()
 	dst = mat64.NewDense(rows, cols, nil)
@@ -57,27 +57,33 @@ func boxFilter(src *mat64.Dense, ksize int) (dst *mat64.Dense) {
 	return
 }
 
-func AdaptiveThreshold(src *mat64.Dense, maxValue float64, thresholdType ThresholdType, blockSize int, delta float64) (dst *mat64.Dense, err error) {
+func AdaptiveThreshold(src *mat64.Dense, maxValue float64, thresholdType ThresholdType, blockSize int, delta float64) (dst *mat64.Dense) {
 	if blockSize%2 != 1 || blockSize < 1 {
-		return dst, ErrBlockSize
+		panic(ErrBlockSize)
 	}
 
 	if maxValue < 0 {
-		return src, nil
+		return src
 	}
 
-	dst = boxFilter(src, blockSize)
+	dst = meanFilter(src, blockSize)
 	rows, cols := src.Dims()
 	for col := 0; col < cols; col++ {
 		for row := 0; row < rows; row++ {
 			newVal := 0.0
-			dstVal := dst.At(row, col)
+			dstVal := dst.At(row, col) - delta
 			srcVal := src.At(row, col)
-			if dstVal > srcVal {
-				newVal = maxValue
+			if thresholdType == ThreshBinary {
+				if srcVal > dstVal {
+					newVal = maxValue
+				}
+			} else if thresholdType == ThreshBinaryInv {
+				if srcVal < dstVal {
+					newVal = maxValue
+				}
 			}
 			dst.Set(row, col, newVal)
 		}
 	}
-	return dst, nil
+	return dst
 }
