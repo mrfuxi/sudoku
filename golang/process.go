@@ -132,15 +132,20 @@ func main() {
 	gray := grayImage(img)
 	mat := imageToMatrix(gray)
 
-	t0 := time.Now()
 	binary := binarize(mat)
 	deblobbed := removeBlobsBody(binary)
+
+	t0 := time.Now()
+	lines := HoughLines(deblobbed, nil, 80)
 	t1 := time.Now()
 	fmt.Printf("The call took %v to run.\n", t1.Sub(t0))
+	l := drawLines(img, lines)
 
 	i := matrixToImage(binary)
 	saveImage(&i, "b.png")
 
 	j := matrixToImage(deblobbed)
 	saveImage(&j, "d.png")
+
+	saveImage(l, "l.png")
 }
