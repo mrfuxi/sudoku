@@ -1,7 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"math"
+	"sort"
 	"sync"
 	"sync/atomic"
 
@@ -13,6 +15,16 @@ type Line struct {
 	Distance int
 	Count    uint64
 }
+
+func (l Line) String() string {
+	return fmt.Sprintf("Line{Theta: %f, Distance: %d, Count: %d}", l.Theta, l.Distance, l.Count)
+}
+
+type ByCount []Line
+
+func (a ByCount) Len() int           { return len(a) }
+func (a ByCount) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a ByCount) Less(i, j int) bool { return a[i].Count < a[j].Count }
 
 func GenerateThetas(start, end, step float64) (thetas []float64) {
 	count := int((end-start)/step) + 1
@@ -27,7 +39,7 @@ func GenerateThetas(start, end, step float64) (thetas []float64) {
 
 func HoughLines(src *mat64.Dense, thetas []float64, threshold uint64) []Line {
 	if thetas == nil {
-		thetas = GenerateThetas(-math.Pi/2.0, math.Pi/2, math.Pi/180.0)
+		thetas = GenerateThetas(-math.Pi/2, math.Pi/2, math.Pi/180.0)
 	}
 	rows, cols := src.Dims()
 	maxR := 2 * math.Hypot(float64(cols), float64(rows))
@@ -70,7 +82,7 @@ func HoughLines(src *mat64.Dense, thetas []float64, threshold uint64) []Line {
 	for i := range hAcc {
 		r := i - int(offset)
 		for j, count := range hAcc[i] {
-			if count < threshold {
+			if count < 2 || count < threshold {
 				continue
 			}
 			line := Line{
@@ -81,6 +93,8 @@ func HoughLines(src *mat64.Dense, thetas []float64, threshold uint64) []Line {
 			lines = append(lines, line)
 		}
 	}
+
+	sort.Reverse(ByCount(lines))
 
 	return lines
 }
