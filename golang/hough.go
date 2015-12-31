@@ -20,11 +20,15 @@ func (l Line) String() string {
 	return fmt.Sprintf("Line{Theta: %f, Distance: %d, Count: %d}", l.Theta, l.Distance, l.Count)
 }
 
+func (l Line) HashKey() string {
+	return fmt.Sprintf("%0.8f:%d", l.Theta, l.Distance)
+}
+
 type ByCount []Line
 
 func (a ByCount) Len() int           { return len(a) }
 func (a ByCount) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a ByCount) Less(i, j int) bool { return a[i].Count < a[j].Count }
+func (a ByCount) Less(i, j int) bool { return a[i].Count > a[j].Count } // Reversed order most to least
 
 func GenerateThetas(start, end, step float64) (thetas []float64) {
 	count := int((end-start)/step) + 1
@@ -37,7 +41,7 @@ func GenerateThetas(start, end, step float64) (thetas []float64) {
 	return thetas
 }
 
-func HoughLines(src *mat64.Dense, thetas []float64, threshold uint64) []Line {
+func HoughLines(src *mat64.Dense, thetas []float64, threshold uint64, limit int) []Line {
 	if thetas == nil {
 		thetas = GenerateThetas(-math.Pi/2, math.Pi/2, math.Pi/180.0)
 	}
@@ -78,23 +82,37 @@ func HoughLines(src *mat64.Dense, thetas []float64, threshold uint64) []Line {
 	}
 	wg.Wait()
 
+	linesSet := make(map[string]bool)
 	lines := make([]Line, 0)
 	for i := range hAcc {
 		r := i - int(offset)
+		thetaOffset := 0.0
+		if r < 0 {
+			thetaOffset = math.Pi
+			r *= -1
+		}
 		for j, count := range hAcc[i] {
 			if count < 2 || count < threshold {
 				continue
 			}
+
 			line := Line{
-				Theta:    thetas[j],
+				Theta:    thetas[j] + thetaOffset,
 				Distance: r,
 				Count:    count,
 			}
-			lines = append(lines, line)
+			if !linesSet[line.HashKey()] {
+				linesSet[line.HashKey()] = true
+				lines = append(lines, line)
+			}
 		}
 	}
 
-	sort.Reverse(ByCount(lines))
+	sort.Sort(ByCount(lines))
+
+	if limit > 0 && len(lines) > limit {
+		lines = lines[:limit]
+	}
 
 	return lines
 }

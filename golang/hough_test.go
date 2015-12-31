@@ -38,14 +38,14 @@ func TestHoughLines(t *testing.T) {
 	timg.Set(200, 10, 1.0)
 	timg.Set(400, 10, 1.0)
 
-	lines := HoughLines(timg, nil, 0)
+	lines := HoughLines(timg, nil, 0, 10)
 	if !assert.Len(t, lines, 6) {
 		t.FailNow()
 	}
 
 	expectedLines := []Line{
-		Line{Theta: 0.000000, Distance: 10, Count: 3},
 		Line{Theta: 1.570796, Distance: 10, Count: 3},
+		Line{Theta: 0.000000, Distance: 10, Count: 3},
 		Line{Theta: 0.785398, Distance: 148, Count: 2},
 		Line{Theta: 0.453786, Distance: 184, Count: 2},
 		Line{Theta: 1.117011, Distance: 184, Count: 2},

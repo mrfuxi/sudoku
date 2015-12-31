@@ -1,16 +1,11 @@
 package main
 
 import (
-	"flag"
-	"fmt"
 	"image"
 	"image/color"
 	"image/png"
-	"log"
 	"os"
 	"path"
-	"runtime/pprof"
-	"time"
 
 	"github.com/gonum/matrix/mat64"
 )
@@ -117,43 +112,16 @@ func removeBlobsBody(src *mat64.Dense) (dst *mat64.Dense) {
 	return AdaptiveThreshold(src, 1, ThreshBinary, window, -0.5)
 }
 
-func main() {
-	os.RemoveAll(SaveLocation)
-	os.MkdirAll(SaveLocation, os.ModePerm)
+// PreProcess prepares original image for actual work
+// - coverts to gray scale
+// - threshold to produce binary image
+// - removes some of big areas/blobs
+func PreProcess(img image.Image) *mat64.Dense {
+	grayImg := grayImage(img)
+	grayMat := imageToMatrix(grayImg)
 
-	var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
-
-	flag.Parse()
-	if *cpuprofile != "" {
-		f, err := os.Create(*cpuprofile)
-		if err != nil {
-			log.Fatal(err)
-		}
-		pprof.StartCPUProfile(f)
-		defer pprof.StopCPUProfile()
-	}
-
-	img, err := getExampleImage("s2.png")
-	if err != nil {
-		fmt.Println(err)
-	}
-	gray := grayImage(img)
-	mat := imageToMatrix(gray)
-
-	binary := binarize(mat)
+	binary := binarize(grayMat)
 	deblobbed := removeBlobsBody(binary)
 
-	t0 := time.Now()
-	lines := HoughLines(deblobbed, nil, 80)
-	t1 := time.Now()
-	fmt.Printf("The call took %v to run.\n", t1.Sub(t0))
-	l := drawLines(img, lines)
-
-	i := matrixToImage(binary)
-	saveImage(&i, "b.png")
-
-	j := matrixToImage(deblobbed)
-	saveImage(&j, "d.png")
-
-	saveImage(l, "l.png")
+	return deblobbed
 }
