@@ -30,11 +30,12 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
+	width, height := img.Bounds().Max.X, img.Bounds().Max.Y
 
 	t0 := time.Now()
 	preparedImg := PreProcess(img)
 	lines := HoughLines(preparedImg, nil, 80, 100)
-
+	lines = removeDuplicateLines(lines, width, height)
 	t1 := time.Now()
 	fmt.Printf("The call took %v to run.\n", t1.Sub(t0))
 
