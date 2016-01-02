@@ -1,17 +1,25 @@
 package main
 
 import (
-	"fmt"
 	"math"
 
 	"github.com/gonum/matrix/mat64"
 )
 
+const pi2 = 2 * math.Pi
+
 func similarAngles(a, b float64) bool {
 	minAngDiff := 0.5 // ~28deg
 
+	if a > pi2 || a < -pi2 {
+		a -= math.Floor(a/pi2) * pi2
+	}
+	if b > pi2 || b < -pi2 {
+		b -= math.Floor(b/pi2) * pi2
+	}
+
 	angDiff := math.Abs(a - b)
-	if angDiff < minAngDiff || angDiff > (math.Pi-minAngDiff) {
+	if angDiff < minAngDiff || angDiff > (pi2-minAngDiff) {
 		return true
 	}
 	return false
@@ -34,10 +42,11 @@ func intersection(lineA, lineB Line) (bool, int, int) {
 		float64(lineA.Distance), float64(lineB.Distance),
 	})
 	x := mat64.NewDense(2, 1, nil)
-	x.Solve(A, b)
-	fmt.Println(x.At(0, 0), x.At(1, 0))
+	err := x.Solve(A, b)
 
-	return false, 0, 0
+	ok := err == nil
+	// Using 0.5 to force round to nearest int rather than Floor
+	return ok, int(x.At(0, 0) + 0.5), int(x.At(1, 0) + 0.5)
 }
 
 // duplicates: crosses in view at low angle
