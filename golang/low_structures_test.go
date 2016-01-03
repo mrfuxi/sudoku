@@ -107,3 +107,114 @@ func TestRemoveDuplicateLines(t *testing.T) {
 		assert.Len(t, post, len(tt.post))
 	}
 }
+
+func TestGenerateAngleBuckets(t *testing.T) {
+	var examples = []struct {
+		bucketSize uint
+		step       uint
+		ortogonal  bool
+		expected   map[int][]Bucket
+	}{
+		{
+			60, 30, false,
+			map[int][]Bucket{
+				0:   {Bucket{-30, 30}, Bucket{150, 180}},
+				30:  {Bucket{0, 60}},
+				60:  {Bucket{30, 90}},
+				90:  {Bucket{60, 120}},
+				120: {Bucket{90, 150}},
+				150: {Bucket{120, 180}},
+			},
+		},
+		{
+			60, 30, true,
+			map[int][]Bucket{
+				0:  {Bucket{-30, 30}, Bucket{150, 180}, Bucket{60, 120}},
+				30: {Bucket{0, 60}, Bucket{90, 150}},
+				60: {Bucket{30, 90}, Bucket{120, 180}},
+			},
+		},
+		{
+			20, 5, true,
+			map[int][]Bucket{
+				0:  {Bucket{-10, 10}, Bucket{170, 180}, Bucket{80, 100}},
+				5:  {Bucket{-5, 15}, Bucket{175, 180}, Bucket{85, 105}},
+				10: {Bucket{0, 20}, Bucket{90, 110}},
+				15: {Bucket{5, 25}, Bucket{95, 115}},
+				20: {Bucket{10, 30}, Bucket{100, 120}},
+				25: {Bucket{15, 35}, Bucket{105, 125}},
+				30: {Bucket{20, 40}, Bucket{110, 130}},
+				35: {Bucket{25, 45}, Bucket{115, 135}},
+				40: {Bucket{30, 50}, Bucket{120, 140}},
+				45: {Bucket{35, 55}, Bucket{125, 145}},
+				50: {Bucket{40, 60}, Bucket{130, 150}},
+				55: {Bucket{45, 65}, Bucket{135, 155}},
+				60: {Bucket{50, 70}, Bucket{140, 160}},
+				65: {Bucket{55, 75}, Bucket{145, 165}},
+				70: {Bucket{60, 80}, Bucket{150, 170}},
+				75: {Bucket{65, 85}, Bucket{155, 175}},
+				80: {Bucket{70, 90}, Bucket{160, 180}},
+				85: {Bucket{75, 95}, Bucket{165, 185}, Bucket{0, 5}},
+			},
+		},
+		{
+			20, 5, false,
+			map[int][]Bucket{
+				0:   {Bucket{-10, 10}, Bucket{170, 180}},
+				5:   {Bucket{-5, 15}, Bucket{175, 180}},
+				10:  {Bucket{0, 20}},
+				15:  {Bucket{5, 25}},
+				20:  {Bucket{10, 30}},
+				25:  {Bucket{15, 35}},
+				30:  {Bucket{20, 40}},
+				35:  {Bucket{25, 45}},
+				40:  {Bucket{30, 50}},
+				45:  {Bucket{35, 55}},
+				50:  {Bucket{40, 60}},
+				55:  {Bucket{45, 65}},
+				60:  {Bucket{50, 70}},
+				65:  {Bucket{55, 75}},
+				70:  {Bucket{60, 80}},
+				75:  {Bucket{65, 85}},
+				80:  {Bucket{70, 90}},
+				85:  {Bucket{75, 95}},
+				90:  {Bucket{80, 100}},
+				95:  {Bucket{85, 105}},
+				100: {Bucket{90, 110}},
+				105: {Bucket{95, 115}},
+				110: {Bucket{100, 120}},
+				115: {Bucket{105, 125}},
+				120: {Bucket{110, 130}},
+				125: {Bucket{115, 135}},
+				130: {Bucket{120, 140}},
+				135: {Bucket{125, 145}},
+				140: {Bucket{130, 150}},
+				145: {Bucket{135, 155}},
+				150: {Bucket{140, 160}},
+				155: {Bucket{145, 165}},
+				160: {Bucket{150, 170}},
+				165: {Bucket{155, 175}},
+				170: {Bucket{160, 180}},
+				175: {Bucket{165, 185}, Bucket{0, 5}},
+			},
+		},
+	}
+
+	for _, tt := range examples {
+		buckets := generateAngleBuckets(tt.bucketSize, tt.step, tt.ortogonal)
+		if !assert.Len(t, buckets, len(tt.expected)) {
+			t.FailNow()
+		}
+		for k, v := range buckets {
+			kDeg := int(k*180/math.Pi + 0.5)
+			assert.Contains(t, tt.expected, kDeg)
+			if !assert.Len(t, v, len(tt.expected[kDeg])) {
+				t.FailNow()
+			}
+			for i, bucket := range v {
+				assert.InDelta(t, tt.expected[kDeg][i].Start, bucket.Start*180/math.Pi, 0.00001)
+				assert.InDelta(t, tt.expected[kDeg][i].End, bucket.End*180/math.Pi, 0.00001)
+			}
+		}
+	}
+}
