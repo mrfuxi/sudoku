@@ -36,6 +36,9 @@ func main() {
 	preparedImg := PreProcess(img)
 	lines := HoughLines(preparedImg, nil, 80, 100)
 	lines = removeDuplicateLines(lines, width, height)
+	bucketSize := 90 / 5
+	generateAngleBuckets(uint(bucketSize), uint(bucketSize/2.0), true)
+
 	t1 := time.Now()
 	fmt.Printf("The call took %v to run.\n", t1.Sub(t0))
 

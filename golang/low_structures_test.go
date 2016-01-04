@@ -7,6 +7,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const thetaDelta = 0.00001
+
 func TestSimilarAngles(t *testing.T) {
 	var examples = []struct {
 		a       float64
@@ -18,6 +20,12 @@ func TestSimilarAngles(t *testing.T) {
 		{0.0, 0.50, false},
 		{0.0, -0.49, true},
 		{0.0, -0.50, false},
+		{2 * math.Pi, 0.0, true},
+		{2 * math.Pi, 2 * math.Pi, true},
+		{2 * math.Pi, 0.49, true},
+		{2 * math.Pi, 0.50, false},
+		{2 * math.Pi, -0.49, true},
+		{2 * math.Pi, -0.50, false},
 		{0.0, 2 * math.Pi, true},
 		{0.0, 2*math.Pi + 0.49, true},
 		{0.0, 2*math.Pi + 0.50, false},
@@ -212,9 +220,70 @@ func TestGenerateAngleBuckets(t *testing.T) {
 				t.FailNow()
 			}
 			for i, bucket := range v {
-				assert.InDelta(t, tt.expected[kDeg][i].Start, bucket.Start*180/math.Pi, 0.00001)
-				assert.InDelta(t, tt.expected[kDeg][i].End, bucket.End*180/math.Pi, 0.00001)
+				assert.InDelta(t, tt.expected[kDeg][i].Start, bucket.Start*180/math.Pi, thetaDelta)
+				assert.InDelta(t, tt.expected[kDeg][i].End, bucket.End*180/math.Pi, thetaDelta)
 			}
+		}
+	}
+}
+
+func TestLinesWithSimilarAngle(t *testing.T) {
+	examples := []struct {
+		angle   float64
+		lines   []Line
+		similar []Line
+		other   []Line
+	}{
+		{
+			angle:   0,
+			lines:   []Line{Line{Theta: 0, Distance: 1}, Line{Theta: 0, Distance: 1000}, Line{Theta: 0.49}, Line{Theta: 0.5}, Line{Theta: -0.49}, Line{Theta: -0.5}},
+			similar: []Line{Line{Theta: 0, Distance: 1}, Line{Theta: 0, Distance: 1000}, Line{Theta: 0.49}, Line{Theta: -0.49}},
+			other:   []Line{Line{Theta: 0.5}, Line{Theta: -0.5}},
+		},
+		{
+			angle:   2 * math.Pi,
+			lines:   []Line{Line{Theta: 0, Distance: 1}, Line{Theta: 0, Distance: 1000}, Line{Theta: 0.49}, Line{Theta: 0.5}, Line{Theta: -0.49}, Line{Theta: -0.5}},
+			similar: []Line{Line{Theta: 0, Distance: 1}, Line{Theta: 0, Distance: 1000}, Line{Theta: 0.49}, Line{Theta: -0.49}},
+			other:   []Line{Line{Theta: 0.5}, Line{Theta: -0.5}},
+		},
+		{
+			angle:   math.Pi,
+			lines:   []Line{Line{Theta: math.Pi + 0, Distance: 1}, Line{Theta: math.Pi + 0, Distance: 1000}, Line{Theta: math.Pi + 0.49}, Line{Theta: math.Pi + 0.5}, Line{Theta: math.Pi - 0.49}, Line{Theta: math.Pi - 0.5}},
+			similar: []Line{Line{Theta: math.Pi + 0, Distance: 1}, Line{Theta: math.Pi + 0, Distance: 1000}, Line{Theta: math.Pi + 0.49}, Line{Theta: math.Pi - 0.49}},
+			other:   []Line{Line{Theta: math.Pi + 0.5}, Line{Theta: math.Pi - 0.5}},
+		},
+		{
+			angle:   math.Pi,
+			lines:   []Line{Line{Theta: 0, Distance: 1}, Line{Theta: 0, Distance: 1000}, Line{Theta: 0.49}, Line{Theta: 0.5}, Line{Theta: -0.49}, Line{Theta: -0.5}},
+			similar: []Line{},
+			other:   []Line{Line{Theta: 0, Distance: 1}, Line{Theta: 0, Distance: 1000}, Line{Theta: 0.49}, Line{Theta: 0.5}, Line{Theta: -0.49}, Line{Theta: -0.5}},
+		},
+		{
+			angle:   0,
+			lines:   []Line{Line{Theta: 0, Distance: 1}, Line{Theta: 0, Distance: 1000}, Line{Theta: 0.49}, Line{Theta: -0.49}},
+			similar: []Line{Line{Theta: 0, Distance: 1}, Line{Theta: 0, Distance: 1000}, Line{Theta: 0.49}, Line{Theta: -0.49}},
+			other:   []Line{},
+		},
+	}
+
+	for _, tt := range examples {
+		similar, other := linesWithSimilarAngle(tt.lines, tt.angle)
+		if !assert.Len(t, similar, len(tt.similar)) {
+			t.Logf("Got:\n%v\nexpecting:\n%v", similar, tt.similar)
+			t.FailNow()
+		}
+		for i, line := range similar {
+			assert.InDelta(t, tt.similar[i].Theta, line.Theta, thetaDelta)
+			assert.Equal(t, tt.similar[i].Distance, line.Distance)
+		}
+
+		if !assert.Len(t, other, len(tt.other)) {
+			t.Logf("Got:\n%v\nexpecting:\n%v", similar, tt.similar)
+			t.FailNow()
+		}
+		for i, line := range other {
+			assert.InDelta(t, tt.other[i].Theta, line.Theta, thetaDelta)
+			assert.Equal(t, tt.other[i].Distance, line.Distance)
 		}
 	}
 }

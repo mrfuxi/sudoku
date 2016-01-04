@@ -21,10 +21,10 @@ func (b Bucket) String() string {
 func similarAngles(a, b float64) bool {
 	minAngDiff := 0.5 // ~28deg
 
-	if a > pi2 || a < -pi2 {
+	if a >= pi2 || a <= -pi2 {
 		a -= math.Floor(a/pi2) * pi2
 	}
-	if b > pi2 || b < -pi2 {
+	if b >= pi2 || b <= -pi2 {
 		b -= math.Floor(b/pi2) * pi2
 	}
 
@@ -126,27 +126,27 @@ func generateAngleBuckets(bucketSize uint, step uint, ortogonal bool) map[float6
 	window := DegToRad * float64(bucketSize)
 	stepSize := DegToRad * float64(step)
 
-	window_2 := window / 2.0
-	pos := 0.0
-	div := 1.0
+	window2 := window / 2.0
+	maxPos := math.Pi
 	if ortogonal {
-		div = 2.0
+		maxPos = math.Pi / 2
 	}
-	max_pos := math.Pi/div - stepSize
+	maxPos = maxPos - stepSize
 	buckets := make(map[float64][]Bucket, 0)
 
+	pos := 0.0
 	for {
-		b1 := Bucket{pos - window_2, pos + window_2}
+		b1 := Bucket{pos - window2, pos + window2}
 		bucket := []Bucket{b1}
 
 		if b1.Start < 0 {
-			b1_prim := Bucket{math.Pi + b1.Start, math.Pi}
-			bucket = append(bucket, b1_prim)
+			b1Prim := Bucket{math.Pi + b1.Start, math.Pi}
+			bucket = append(bucket, b1Prim)
 		}
 
 		if b1.End > math.Pi {
-			b1_bis := Bucket{0, b1.End - math.Pi}
-			bucket = append(bucket, b1_bis)
+			b1Bis := Bucket{0, b1.End - math.Pi}
+			bucket = append(bucket, b1Bis)
 		}
 
 		if ortogonal {
@@ -154,18 +154,35 @@ func generateAngleBuckets(bucketSize uint, step uint, ortogonal bool) map[float6
 			bucket = append(bucket, b2)
 
 			if b2.End > math.Pi {
-				b2_prim := Bucket{0, b2.End - math.Pi}
-				bucket = append(bucket, b2_prim)
+				b2Prim := Bucket{0, b2.End - math.Pi}
+				bucket = append(bucket, b2Prim)
 			}
 		}
 
 		buckets[pos] = bucket
 
 		pos += stepSize
-		if pos >= max_pos {
+		if pos >= maxPos {
 			break
 		}
 	}
 
 	return buckets
+}
+
+// Splits lines into two groups one that are similar to given angle,
+// and the rest of lines
+func linesWithSimilarAngle(lines []Line, angle float64) ([]Line, []Line) {
+	similar := make([]Line, 0)
+	other := make([]Line, 0)
+
+	for _, line := range lines {
+		if similarAngles(line.Theta, angle) {
+			similar = append(similar, line)
+		} else {
+			other = append(other, line)
+		}
+	}
+
+	return similar, other
 }
