@@ -287,3 +287,92 @@ func TestLinesWithSimilarAngle(t *testing.T) {
 		}
 	}
 }
+
+func TestPutLinesIntoBuckets(t *testing.T) {
+	buckets := map[float64][]Bucket{
+		0.0: {Bucket{-0.1, 0.1}, Bucket{math.Pi - 0.1, math.Pi + 0.1}},
+		1.0: {Bucket{0.9, 1.1}},
+	}
+
+	lines := []Line{
+		Line{Theta: 0},
+		Line{Theta: -0.1},
+		Line{Theta: 0.1},
+		Line{Theta: math.Pi},
+		Line{Theta: 1.1},
+		Line{Theta: 100},
+		Line{Theta: -0.11},
+		Line{Theta: 0.11},
+	}
+
+	expected := map[float64][]Line{
+		0.0: {Line{Theta: 0}, Line{Theta: -0.1}, Line{Theta: 0.1}, Line{Theta: math.Pi}},
+		1.0: {Line{Theta: 1.1}},
+	}
+
+	bucketed := putLinesIntoBuckets(buckets, lines)
+	assert.Len(t, bucketed, len(expected))
+	for angle, expected_lines := range expected {
+		if !assert.Len(t, bucketed[angle], len(expected_lines)) {
+			t.FailNow()
+		}
+
+		for i, line := range bucketed[angle] {
+			assert.EqualValues(t, expected_lines[i], line)
+		}
+	}
+}
+
+func TestPutLinesIntoBucketsDontReuseLinesIfBucketsHaveTheSame(t *testing.T) {
+	buckets := map[float64][]Bucket{
+		1.0: {Bucket{0, 2}},
+		2.0: {Bucket{1, 3}},
+	}
+
+	lines := []Line{
+		Line{Theta: 1},
+		Line{Theta: 1.1},
+	}
+
+	bucketed := putLinesIntoBuckets(buckets, lines)
+	assert.Len(t, bucketed, 1) // it will be either 1.0 or 2.0, not both
+
+	angle := 1.0
+	if len(bucketed[angle]) == 0 {
+		angle = 2.0
+	}
+
+	for i, line := range bucketed[angle] {
+		assert.EqualValues(t, lines[i], line)
+	}
+}
+
+func TestPutLinesIntoBucketsReuseLineIfBucketsHaveSlightlyDifferent(t *testing.T) {
+	buckets := map[float64][]Bucket{
+		1.0: {Bucket{0, 2}},
+		2.0: {Bucket{1, 3}},
+	}
+
+	lines := []Line{
+		Line{Theta: 1},
+		Line{Theta: 1.1},
+		Line{Theta: 2.1},
+	}
+
+	expected := map[float64][]Line{
+		1.0: {Line{Theta: 1}, Line{Theta: 1.1}},
+		2.0: {Line{Theta: 1}, Line{Theta: 1.1}, Line{Theta: 2.1}},
+	}
+
+	bucketed := putLinesIntoBuckets(buckets, lines)
+	assert.Len(t, bucketed, len(expected))
+	for angle, expected_lines := range expected {
+		if !assert.Len(t, bucketed[angle], len(expected_lines)) {
+			t.FailNow()
+		}
+
+		for i, line := range bucketed[angle] {
+			assert.EqualValues(t, expected_lines[i], line)
+		}
+	}
+}
