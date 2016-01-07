@@ -55,29 +55,49 @@ func TestSimilarAngles(t *testing.T) {
 
 func TestIntersections(t *testing.T) {
 	var examples = []struct {
-		a  Line
-		b  Line
-		ok bool
-		x  int
-		y  int
+		a        Line
+		b        Line
+		ok       bool
+		solution Point
 	}{
-		{Line{Theta: 0.000000, Distance: 10}, Line{Theta: 1.570796, Distance: 10}, true, 10, 10},
-		{Line{Theta: 0.000000, Distance: 10}, Line{Theta: 0.785398, Distance: 148}, true, 10, 199},
-		{Line{Theta: 0.000000, Distance: 10}, Line{Theta: 0.453786, Distance: 184}, true, 10, 399},
-		{Line{Theta: 0.000000, Distance: 10}, Line{Theta: 1.117011, Distance: 184}, true, 10, 200},
-		{Line{Theta: 0.000000, Distance: 10}, Line{Theta: 0.785398, Distance: 290}, true, 10, 400},
-		{Line{Theta: 0.785398, Distance: 148}, Line{Theta: 1.117011, Distance: 184}, true, 9, 200},
-		{Line{Theta: 0.785398, Distance: 148}, Line{Theta: 0.785399, Distance: 290}, true, -100409041, 100409284}, // lines are almost parallel
-		{Line{Theta: 0.000000, Distance: 10}, Line{Theta: 0.000000, Distance: 20}, false, 0, 0},                   // no solution, lines are parallel
-		{Line{Theta: 0.000000, Distance: 10}, Line{Theta: 0.000000, Distance: 10}, false, 0, 0},                   // no solution, lines are parallel
-		{Line{Theta: 0.785398, Distance: 148}, Line{Theta: 0.785398, Distance: 290}, false, 0, 0},                 // no solution, lines are parallel
+		{Line{Theta: 0.000000, Distance: 10}, Line{Theta: 1.570796, Distance: 10}, true, Point{10, 10}},
+		{Line{Theta: 0.000000, Distance: 10}, Line{Theta: 0.785398, Distance: 148}, true, Point{10, 199}},
+		{Line{Theta: 0.000000, Distance: 10}, Line{Theta: 0.453786, Distance: 184}, true, Point{10, 399}},
+		{Line{Theta: 0.000000, Distance: 10}, Line{Theta: 1.117011, Distance: 184}, true, Point{10, 200}},
+		{Line{Theta: 0.000000, Distance: 10}, Line{Theta: 0.785398, Distance: 290}, true, Point{10, 400}},
+		{Line{Theta: 0.785398, Distance: 148}, Line{Theta: 1.117011, Distance: 184}, true, Point{9, 200}},
+		{Line{Theta: 0.785398, Distance: 148}, Line{Theta: 0.785399, Distance: 290}, true, Point{-100409041, 100409284}}, // lines are almost parallel
+		{Line{Theta: 0.000000, Distance: 10}, Line{Theta: 0.000000, Distance: 20}, false, Point{0, 0}},                   // no solution, lines are parallel
+		{Line{Theta: 0.000000, Distance: 10}, Line{Theta: 0.000000, Distance: 10}, false, Point{0, 0}},                   // no solution, lines are parallel
+		{Line{Theta: 0.785398, Distance: 148}, Line{Theta: 0.785398, Distance: 290}, false, Point{0, 0}},                 // no solution, lines are parallel
 	}
 	for _, tt := range examples {
-		ok, x, y := intersection(tt.a, tt.b)
+		ok, point := intersection(tt.a, tt.b)
 		format := "Intersection between %v and %v"
 		assert.Equal(t, tt.ok, ok, format, tt.a, tt.b)
-		assert.Equal(t, tt.x, x, format, tt.a, tt.b)
-		assert.Equal(t, tt.y, y, format, tt.a, tt.b)
+		assert.Equal(t, tt.solution.X, point.X, format, tt.a, tt.b)
+		assert.Equal(t, tt.solution.Y, point.Y, format, tt.a, tt.b)
+	}
+}
+
+func TestPointDistince(t *testing.T) {
+	var examples = []struct {
+		a        Point
+		b        Point
+		distance float64
+	}{
+		{Point{0, 0}, Point{1, 1}, math.Sqrt(2)},
+		{Point{1, 1}, Point{2, 2}, math.Sqrt(2)},
+		{Point{0, 0}, Point{1, 2}, math.Sqrt(5)},
+		{Point{-1, -1}, Point{1, 1}, math.Sqrt(8)},
+	}
+
+	for _, tt := range examples {
+		distanceA := tt.a.DistanceTo(tt.b)
+		distanceB := tt.b.DistanceTo(tt.a)
+		assert.Equal(t, distanceA, distanceB)
+		assert.Equal(t, tt.distance, distanceA)
+		assert.Equal(t, tt.distance, distanceB)
 	}
 }
 

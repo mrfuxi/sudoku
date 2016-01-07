@@ -19,6 +19,15 @@ func (b Bucket) String() string {
 	return fmt.Sprintf("Bucket{%.0f, %.0f}", b.Start*180/math.Pi, b.End*180/math.Pi)
 }
 
+type Point struct {
+	X int
+	Y int
+}
+
+func (p Point) DistanceTo(other Point) float64 {
+	return math.Hypot(float64(p.X-other.X), float64(p.Y-other.Y))
+}
+
 func similarAngles(a, b float64) bool {
 	minAngDiff := 0.5 // ~28deg
 
@@ -44,7 +53,7 @@ func similarAngles(a, b float64) bool {
 //
 // As matrix:
 // A*X = b
-func intersection(lineA, lineB Line) (bool, int, int) {
+func intersection(lineA, lineB Line) (bool, Point) {
 	A := mat64.NewDense(2, 2, []float64{
 		math.Cos(lineA.Theta), math.Sin(lineA.Theta),
 		math.Cos(lineB.Theta), math.Sin(lineB.Theta),
@@ -57,7 +66,11 @@ func intersection(lineA, lineB Line) (bool, int, int) {
 
 	ok := err == nil
 	// Using 0.5 to force round to nearest int rather than Floor
-	return ok, int(x.At(0, 0) + 0.5), int(x.At(1, 0) + 0.5)
+	point := Point{
+		X: int(x.At(0, 0) + 0.5),
+		Y: int(x.At(1, 0) + 0.5),
+	}
+	return ok, point
 }
 
 // duplicates: crosses in view at low angle
@@ -85,13 +98,13 @@ func removeDuplicateLines(lines []Line, width, height int) []Line {
 				continue
 			}
 
-			ok, x, y := intersection(lineA, lineB)
+			ok, point := intersection(lineA, lineB)
 			if !ok {
 				continue
 			}
 
-			in_view := (minX <= x && x <= maxX &&
-				minY <= y && y <= maxY)
+			in_view := (minX <= point.X && point.X <= maxX &&
+				minY <= point.Y && point.Y <= maxY)
 
 			if in_view {
 				toRemove[k] = true
