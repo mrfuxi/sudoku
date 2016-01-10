@@ -1,38 +1,28 @@
 package main
 
+import "math"
+
 func preparePointDistances(positions []float64) []float64 {
 	maxPos := positions[len(positions)-1]
-	ld := int(maxPos+0.5) + 1
+	ld := int(maxPos) + 1
 
-	closest := make([]int, ld, ld)
-	distances := make([]float64, ld, ld)
-	for i := 1; i < ld; i++ {
-		closest[i] = int(maxPos + 0.5)
-		distances[i] = maxPos
-	}
+	closest := make([]float64, ld, ld)
 
-	for _, position := range positions {
-		idx := int(position + 0.5)
-		closest[idx] = 0
-		distances[idx] = position
-		for i := 1; i < idx+1; i++ {
-			if i < closest[idx-i] {
-				closest[idx-i] = i
-				distances[idx-i] = position
-			} else {
-				break
-			}
+	posI := 0
+	for c := range closest {
+		d1 := math.Abs(positions[posI] - float64(c))
+		d2 := float64(ld)
+		if posI+1 < len(positions) {
+			d2 = math.Abs(positions[posI+1] - float64(c))
 		}
 
-		for i := 1; i < ld-idx; i++ {
-			if i < closest[idx+i] {
-				closest[idx+i] = i
-				distances[idx+i] = position
-			} else {
-				break
-			}
+		if d1 <= d2 {
+			closest[c] = positions[posI]
+		} else {
+			closest[c] = positions[posI+1]
+			posI += 1
 		}
 	}
 
-	return distances
+	return closest
 }

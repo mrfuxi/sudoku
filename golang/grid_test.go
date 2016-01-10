@@ -12,12 +12,24 @@ func TestPreparePointDistances(t *testing.T) {
 		expected  []float64
 	}{
 		{
+			[]float64{0, 5.5},
+			[]float64{0, 0, 0, 5.5, 5.5, 5.5},
+		},
+		{
 			[]float64{0, 6},
 			[]float64{0, 0, 0, 0, 6, 6, 6},
 		},
 		{
 			[]float64{0, 5},
 			[]float64{0, 0, 0, 5, 5, 5},
+		},
+		{
+			[]float64{2, 5},
+			[]float64{2, 2, 2, 2, 5, 5},
+		},
+		{
+			[]float64{2, 5, 6, 10},
+			[]float64{2, 2, 2, 2, 5, 5, 6, 6, 6, 10, 10},
 		},
 	}
 
