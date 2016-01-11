@@ -26,3 +26,24 @@ func preparePointDistances(positions []float64) []float64 {
 
 	return closest
 }
+
+func pointSimilarities(expectedPoints, distances []float64) (float64, []float64) {
+	fit := 0.0
+	matches := make([]float64, 0)
+
+	step := expectedPoints[1] - expectedPoints[0]
+	for _, expected := range expectedPoints {
+		point := distances[int(expected)]
+		if len(matches) > 0 {
+			f := math.Abs(math.Abs(point-matches[len(matches)-1])-step) / step
+			if f >= 0.2 {
+				break
+			}
+			fit += f / 9.0
+		}
+
+		matches = append(matches, point)
+	}
+
+	return (1 - fit), matches
+}
