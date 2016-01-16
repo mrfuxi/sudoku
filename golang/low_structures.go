@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"math"
 
@@ -207,19 +206,17 @@ func putLinesIntoBuckets(buckets map[float64][]Bucket, lines []Line) map[float64
 
 	for angle, bucket := range buckets {
 		matches := make([]Line, 0)
-		var buffer bytes.Buffer
 
 		for _, line := range lines {
 			for _, b := range bucket {
 				if b.Start <= line.Theta && line.Theta <= b.End {
 					matches = append(matches, line)
-					buffer.WriteString(line.String())
 					break
 				}
 			}
 		}
 
-		matchesKey := buffer.String()
+		matchesKey := LineHash(matches).HashKey()
 		if len(matches) > 0 && !alreadyMatched[matchesKey] {
 			alreadyMatched[matchesKey] = true
 			bucketed[angle] = matches

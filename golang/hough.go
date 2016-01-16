@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"math"
 	"sort"
@@ -22,6 +23,16 @@ func (l Line) String() string {
 
 func (l Line) HashKey() string {
 	return fmt.Sprintf("%0.8f:%d", l.Theta, l.Distance)
+}
+
+type LineHash []Line
+
+func (l LineHash) HashKey() string {
+	var buffer bytes.Buffer
+	for _, line := range l {
+		buffer.WriteString(line.String())
+	}
+	return buffer.String()
 }
 
 type ByCount []Line

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"math"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -71,4 +72,166 @@ func TestPointSimilarities(t *testing.T) {
 		assert.InDelta(t, tt.fit, fit, 0.0001)
 		assert.EqualValues(t, tt.expectedMatches, matchedPoints)
 	}
+}
+
+func TestLinearDistances(t *testing.T) {
+	lines := []Line{
+		Line{Theta: 0, Distance: -10}, // odd
+		Line{Theta: 0, Distance: 10},
+		Line{Theta: 0, Distance: 15}, // odd
+		Line{Theta: 0, Distance: 20},
+		Line{Theta: 0, Distance: 30},
+		Line{Theta: 0, Distance: 40},
+		Line{Theta: 0, Distance: 50},
+		Line{Theta: 0, Distance: 53}, // odd
+		Line{Theta: 0, Distance: 55}, // odd
+		Line{Theta: 0, Distance: 60},
+		Line{Theta: 0, Distance: 70},
+		Line{Theta: 0, Distance: 80},
+		Line{Theta: 0, Distance: 90},
+		Line{Theta: 0, Distance: 101}, // slightly off
+		Line{Theta: 0, Distance: 111}, // slightly off
+		Line{Theta: 0, Distance: 120},
+		Line{Theta: 0, Distance: 130},
+	}
+	dividerLine := Line{Theta: math.Pi / 2, Distance: 0}
+
+	expectedScore := []float64{0.9804, 0.9804, 0.9777, 0.9777}
+	expectedLinesGroups := [][]Line{
+		[]Line{
+			Line{Theta: 0, Distance: 10},
+			Line{Theta: 0, Distance: 20},
+			Line{Theta: 0, Distance: 30},
+			Line{Theta: 0, Distance: 40},
+			Line{Theta: 0, Distance: 50},
+			Line{Theta: 0, Distance: 60},
+			Line{Theta: 0, Distance: 70},
+			Line{Theta: 0, Distance: 80},
+			Line{Theta: 0, Distance: 90},
+			Line{Theta: 0, Distance: 101},
+		},
+		[]Line{
+			Line{Theta: 0, Distance: 20},
+			Line{Theta: 0, Distance: 30},
+			Line{Theta: 0, Distance: 40},
+			Line{Theta: 0, Distance: 50},
+			Line{Theta: 0, Distance: 60},
+			Line{Theta: 0, Distance: 70},
+			Line{Theta: 0, Distance: 80},
+			Line{Theta: 0, Distance: 90},
+			Line{Theta: 0, Distance: 101},
+			Line{Theta: 0, Distance: 111},
+		},
+		[]Line{
+			Line{Theta: 0, Distance: 30},
+			Line{Theta: 0, Distance: 40},
+			Line{Theta: 0, Distance: 50},
+			Line{Theta: 0, Distance: 60},
+			Line{Theta: 0, Distance: 70},
+			Line{Theta: 0, Distance: 80},
+			Line{Theta: 0, Distance: 90},
+			Line{Theta: 0, Distance: 101},
+			Line{Theta: 0, Distance: 111},
+			Line{Theta: 0, Distance: 120},
+		},
+		[]Line{
+			Line{Theta: 0, Distance: 40},
+			Line{Theta: 0, Distance: 50},
+			Line{Theta: 0, Distance: 60},
+			Line{Theta: 0, Distance: 70},
+			Line{Theta: 0, Distance: 80},
+			Line{Theta: 0, Distance: 90},
+			Line{Theta: 0, Distance: 101},
+			Line{Theta: 0, Distance: 111},
+			Line{Theta: 0, Distance: 120},
+			Line{Theta: 0, Distance: 130},
+		},
+	}
+
+	scores, matches := linearDistances(lines, dividerLine)
+	assert.Len(t, scores, len(expectedScore))
+	assert.Len(t, matches, len(expectedLinesGroups))
+
+	for i := range scores {
+		assert.Len(t, matches[i], 10)
+		assert.InDelta(t, expectedScore[i], scores[i], 0.0001)
+		assert.EqualValues(t, expectedLinesGroups[i], matches[i])
+	}
+
+	assert.InDeltaSlice(t, expectedScore, scores, 0.0001)
+}
+
+func TestPossibleGrids(t *testing.T) {
+	linesH := []Line{
+		Line{Theta: 0, Distance: -10}, // odd
+		Line{Theta: 0, Distance: 10},
+		Line{Theta: 0, Distance: 15}, // odd
+		Line{Theta: 0, Distance: 20},
+		Line{Theta: 0, Distance: 30},
+		Line{Theta: 0, Distance: 40},
+		Line{Theta: 0, Distance: 50},
+		Line{Theta: 0, Distance: 53}, // odd
+		Line{Theta: 0, Distance: 55}, // odd
+		Line{Theta: 0, Distance: 60},
+		Line{Theta: 0, Distance: 70},
+		Line{Theta: 0, Distance: 80},
+		Line{Theta: 0, Distance: 90},
+		Line{Theta: 0, Distance: 101}, // slightly off
+		Line{Theta: 0, Distance: 110},
+		Line{Theta: 0, Distance: 120},
+		Line{Theta: 0, Distance: 130},
+	}
+	linesV := []Line{
+		Line{Theta: math.Pi / 2, Distance: -10}, // odd
+		Line{Theta: math.Pi / 2, Distance: 10},
+		Line{Theta: math.Pi / 2, Distance: 15}, // odd
+		Line{Theta: math.Pi / 2, Distance: 20},
+		Line{Theta: math.Pi / 2, Distance: 30},
+		Line{Theta: math.Pi / 2, Distance: 40},
+		Line{Theta: math.Pi / 2, Distance: 50},
+		Line{Theta: math.Pi / 2, Distance: 53}, // odd
+		Line{Theta: math.Pi / 2, Distance: 55}, // odd
+		Line{Theta: math.Pi / 2, Distance: 60},
+		Line{Theta: math.Pi / 2, Distance: 70},
+		Line{Theta: math.Pi / 2, Distance: 80},
+		Line{Theta: math.Pi / 2, Distance: 90},
+		Line{Theta: math.Pi / 2, Distance: 101}, // slightly off
+		Line{Theta: math.Pi / 2, Distance: 111}, // slightly off
+		Line{Theta: math.Pi / 2, Distance: 120},
+		Line{Theta: math.Pi / 2, Distance: 130},
+	}
+
+	firstExpectedGrid := Grid{
+		Horizontal: []Line{
+			Line{Theta: 0, Distance: 10},
+			Line{Theta: 0, Distance: 20},
+			Line{Theta: 0, Distance: 30},
+			Line{Theta: 0, Distance: 40},
+			Line{Theta: 0, Distance: 50},
+			Line{Theta: 0, Distance: 60},
+			Line{Theta: 0, Distance: 70},
+			Line{Theta: 0, Distance: 80},
+			Line{Theta: 0, Distance: 90},
+			Line{Theta: 0, Distance: 101},
+		},
+		Vertical: []Line{
+			Line{Theta: math.Pi / 2, Distance: 10},
+			Line{Theta: math.Pi / 2, Distance: 20},
+			Line{Theta: math.Pi / 2, Distance: 30},
+			Line{Theta: math.Pi / 2, Distance: 40},
+			Line{Theta: math.Pi / 2, Distance: 50},
+			Line{Theta: math.Pi / 2, Distance: 60},
+			Line{Theta: math.Pi / 2, Distance: 70},
+			Line{Theta: math.Pi / 2, Distance: 80},
+			Line{Theta: math.Pi / 2, Distance: 90},
+			Line{Theta: math.Pi / 2, Distance: 101},
+		},
+		Score: 0.98046 * 0.98046,
+	}
+
+	grids := possibleGrids(linesH, linesV)
+	assert.Len(t, grids, 9)
+	assert.EqualValues(t, grids[0].Horizontal, firstExpectedGrid.Horizontal)
+	assert.EqualValues(t, grids[0].Vertical, firstExpectedGrid.Vertical)
+	assert.InDelta(t, grids[0].Score, firstExpectedGrid.Score, 0.0001)
 }
