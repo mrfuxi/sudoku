@@ -17,6 +17,21 @@ func (a GridByScore) Len() int           { return len(a) }
 func (a GridByScore) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a GridByScore) Less(i, j int) bool { return a[i].Score > a[j].Score } // Reversed order most to least
 
+type ScoredLines struct {
+	Lines []Line
+	Score float64
+}
+
+type ScoredLinesByScore []ScoredLines
+
+func (a ScoredLinesByScore) Len() int           { return len(a) }
+func (a ScoredLinesByScore) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a ScoredLinesByScore) Less(i, j int) bool { return a[i].Score > a[j].Score } // Reversed order most to least
+
+func (s *ScoredLines) HashKey() string {
+	return LineHash(s.Lines).HashKey()
+}
+
 type meanAcc struct {
 	values []float64
 }
@@ -43,6 +58,35 @@ func minInt(a, b int) int {
 	return b
 }
 
+// Builds possible line grouppings by using muiltple "cutting" lines
+func buildScoredLines(primary, secondary []Line, top uint) []ScoredLines {
+	lines := make(map[string]ScoredLines, 0)
+	scores := make(map[string]*meanAcc, 0)
+	for _, s := range secondary {
+		matches := linearDistances(primary, s)
+		for _, match := range matches {
+			hash := match.HashKey()
+			if scores[hash] == nil {
+				scores[hash] = new(meanAcc)
+				lines[hash] = match
+			}
+			scores[hash].Add(match.Score)
+		}
+	}
+
+	scoredLines := make([]ScoredLines, len(lines), len(lines))
+	s := 0
+	for hash, scoredLine := range lines {
+		scoredLine.Score = scores[hash].Mean()
+		scoredLines[s] = scoredLine
+		s++
+	}
+
+	sort.Sort(ScoredLinesByScore(scoredLines))
+
+	return scoredLines[:minInt(int(top), len(scoredLines))]
+}
+
 func possibleGrids(horizontal, vertical []Line) []Grid {
 	if !sort.IsSorted(ByCount(vertical)) {
 		panic("should be sorted")
@@ -51,41 +95,16 @@ func possibleGrids(horizontal, vertical []Line) []Grid {
 		panic("should be sorted")
 	}
 
-	linesV := make(map[string][]Line, 0)
-	scoresV := make(map[string]*meanAcc, 0)
-	for _, h := range horizontal {
-		scores, lineGroups := linearDistances(vertical, h)
-		for i, lines := range lineGroups {
-			hash := LineHash(lines).HashKey()
-			if scoresV[hash] == nil {
-				scoresV[hash] = new(meanAcc)
-			}
-			scoresV[hash].Add(scores[i])
-			linesV[hash] = lines
-		}
-	}
-
-	linesH := make(map[string][]Line, 0)
-	scoresH := make(map[string]*meanAcc, 0)
-	for _, v := range vertical {
-		scores, lineGroups := linearDistances(horizontal, v)
-		for i, lines := range lineGroups {
-			hash := LineHash(lines).HashKey()
-			if scoresH[hash] == nil {
-				scoresH[hash] = new(meanAcc)
-			}
-			scoresH[hash].Add(scores[i])
-			linesH[hash] = lines
-		}
-	}
+	linesH := buildScoredLines(horizontal, vertical, 3)
+	linesV := buildScoredLines(vertical, horizontal, 3)
 
 	grids := make([]Grid, 0)
-	for hHash, h := range linesH {
-		for vHash, v := range linesV {
+	for _, h := range linesH {
+		for _, v := range linesV {
 			grid := Grid{
-				Horizontal: h,
-				Vertical:   v,
-				Score:      scoresH[hHash].Mean() * scoresV[vHash].Mean(),
+				Horizontal: h.Lines,
+				Vertical:   v.Lines,
+				Score:      h.Score * v.Score,
 			}
 			grids = append(grids, grid)
 		}
@@ -93,16 +112,16 @@ func possibleGrids(horizontal, vertical []Line) []Grid {
 
 	sort.Sort(GridByScore(grids))
 
-	return grids[:minInt(9, len(grids))]
+	return grids
 }
 
 // Splits lines into groups of 10 with score of how much linearly distributed they are
-func linearDistances(lines []Line, dividerLine Line) (scores []float64, matches [][]Line) {
-	scores = make([]float64, 0)
-	matches = make([][]Line, 0)
+func linearDistances(lines []Line, dividerLine Line) []ScoredLines {
+	matches := make([]ScoredLines, 0)
+
 	linesCount := len(lines)
 	if linesCount < 10 {
-		return
+		return matches
 	}
 
 	intersections := make([]Point, linesCount, linesCount)
@@ -134,17 +153,21 @@ func linearDistances(lines []Line, dividerLine Line) (scores []float64, matches 
 				continue
 			}
 
-			selectedLines := make([]Line, 10, 10)
-			searchablePoints := sort.Float64Slice(points)
-			for l := range selectedLines {
-				selectedLines[l] = lines[searchablePoints.Search(selectedPoints[l])]
+			match := ScoredLines{
+				Score: score,
+				Lines: make([]Line, 10, 10),
 			}
 
-			scores = append(scores, score)
-			matches = append(matches, selectedLines)
+			searchablePoints := sort.Float64Slice(points)
+			for l := range match.Lines {
+				match.Lines[l] = lines[searchablePoints.Search(selectedPoints[l])]
+			}
+
+			matches = append(matches, match)
 		}
 	}
-	return
+
+	return matches
 }
 
 func preparePointDistances(positions []float64) []float64 {

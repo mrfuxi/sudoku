@@ -96,69 +96,77 @@ func TestLinearDistances(t *testing.T) {
 	}
 	dividerLine := Line{Theta: math.Pi / 2, Distance: 0}
 
-	expectedScore := []float64{0.9804, 0.9804, 0.9777, 0.9777}
-	expectedLinesGroups := [][]Line{
-		[]Line{
-			Line{Theta: 0, Distance: 10},
-			Line{Theta: 0, Distance: 20},
-			Line{Theta: 0, Distance: 30},
-			Line{Theta: 0, Distance: 40},
-			Line{Theta: 0, Distance: 50},
-			Line{Theta: 0, Distance: 60},
-			Line{Theta: 0, Distance: 70},
-			Line{Theta: 0, Distance: 80},
-			Line{Theta: 0, Distance: 90},
-			Line{Theta: 0, Distance: 101},
+	expectedScoredLines := []ScoredLines{
+		{
+			Lines: []Line{
+				Line{Theta: 0, Distance: 10},
+				Line{Theta: 0, Distance: 20},
+				Line{Theta: 0, Distance: 30},
+				Line{Theta: 0, Distance: 40},
+				Line{Theta: 0, Distance: 50},
+				Line{Theta: 0, Distance: 60},
+				Line{Theta: 0, Distance: 70},
+				Line{Theta: 0, Distance: 80},
+				Line{Theta: 0, Distance: 90},
+				Line{Theta: 0, Distance: 101},
+			},
+			Score: 0.9804,
 		},
-		[]Line{
-			Line{Theta: 0, Distance: 20},
-			Line{Theta: 0, Distance: 30},
-			Line{Theta: 0, Distance: 40},
-			Line{Theta: 0, Distance: 50},
-			Line{Theta: 0, Distance: 60},
-			Line{Theta: 0, Distance: 70},
-			Line{Theta: 0, Distance: 80},
-			Line{Theta: 0, Distance: 90},
-			Line{Theta: 0, Distance: 101},
-			Line{Theta: 0, Distance: 111},
+		{
+			Lines: []Line{
+				Line{Theta: 0, Distance: 20},
+				Line{Theta: 0, Distance: 30},
+				Line{Theta: 0, Distance: 40},
+				Line{Theta: 0, Distance: 50},
+				Line{Theta: 0, Distance: 60},
+				Line{Theta: 0, Distance: 70},
+				Line{Theta: 0, Distance: 80},
+				Line{Theta: 0, Distance: 90},
+				Line{Theta: 0, Distance: 101},
+				Line{Theta: 0, Distance: 111},
+			},
+			Score: 0.9804,
 		},
-		[]Line{
-			Line{Theta: 0, Distance: 30},
-			Line{Theta: 0, Distance: 40},
-			Line{Theta: 0, Distance: 50},
-			Line{Theta: 0, Distance: 60},
-			Line{Theta: 0, Distance: 70},
-			Line{Theta: 0, Distance: 80},
-			Line{Theta: 0, Distance: 90},
-			Line{Theta: 0, Distance: 101},
-			Line{Theta: 0, Distance: 111},
-			Line{Theta: 0, Distance: 120},
+		{
+			Lines: []Line{
+				Line{Theta: 0, Distance: 30},
+				Line{Theta: 0, Distance: 40},
+				Line{Theta: 0, Distance: 50},
+				Line{Theta: 0, Distance: 60},
+				Line{Theta: 0, Distance: 70},
+				Line{Theta: 0, Distance: 80},
+				Line{Theta: 0, Distance: 90},
+				Line{Theta: 0, Distance: 101},
+				Line{Theta: 0, Distance: 111},
+				Line{Theta: 0, Distance: 120},
+			},
+			Score: 0.9777,
 		},
-		[]Line{
-			Line{Theta: 0, Distance: 40},
-			Line{Theta: 0, Distance: 50},
-			Line{Theta: 0, Distance: 60},
-			Line{Theta: 0, Distance: 70},
-			Line{Theta: 0, Distance: 80},
-			Line{Theta: 0, Distance: 90},
-			Line{Theta: 0, Distance: 101},
-			Line{Theta: 0, Distance: 111},
-			Line{Theta: 0, Distance: 120},
-			Line{Theta: 0, Distance: 130},
+		{
+			Lines: []Line{
+				Line{Theta: 0, Distance: 40},
+				Line{Theta: 0, Distance: 50},
+				Line{Theta: 0, Distance: 60},
+				Line{Theta: 0, Distance: 70},
+				Line{Theta: 0, Distance: 80},
+				Line{Theta: 0, Distance: 90},
+				Line{Theta: 0, Distance: 101},
+				Line{Theta: 0, Distance: 111},
+				Line{Theta: 0, Distance: 120},
+				Line{Theta: 0, Distance: 130},
+			},
+			Score: 0.9777,
 		},
 	}
 
-	scores, matches := linearDistances(lines, dividerLine)
-	assert.Len(t, scores, len(expectedScore))
-	assert.Len(t, matches, len(expectedLinesGroups))
+	matches := linearDistances(lines, dividerLine)
+	assert.Len(t, matches, len(expectedScoredLines))
 
-	for i := range scores {
-		assert.Len(t, matches[i], 10)
-		assert.InDelta(t, expectedScore[i], scores[i], 0.0001)
-		assert.EqualValues(t, expectedLinesGroups[i], matches[i])
+	for i, match := range matches {
+		assert.Len(t, match.Lines, 10)
+		assert.InDelta(t, expectedScoredLines[i].Score, match.Score, 0.0001)
+		assert.EqualValues(t, expectedScoredLines[i].Lines, match.Lines)
 	}
-
-	assert.InDeltaSlice(t, expectedScore, scores, 0.0001)
 }
 
 func TestPossibleGrids(t *testing.T) {
