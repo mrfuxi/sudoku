@@ -27,6 +27,11 @@ func (p Point) DistanceTo(other Point) float64 {
 	return math.Hypot(float64(p.X-other.X), float64(p.Y-other.Y))
 }
 
+type Fragment struct {
+	Start Point
+	End   Point
+}
+
 func similarAngles(a, b float64) bool {
 	minAngDiff := 0.5 // ~28deg
 
@@ -223,4 +228,70 @@ func putLinesIntoBuckets(buckets map[float64][]Bucket, lines []Line) map[float64
 		}
 	}
 	return bucketed
+}
+
+func absInt(value int) int {
+	if value > 0 {
+		return value
+	}
+	return -value
+}
+
+// Bresenham's line algorithm
+func VisitPointsOnLineFragment(fragment Fragment) []Point {
+	x0, x1 := fragment.Start.X, fragment.End.X
+	y0, y1 := fragment.Start.Y, fragment.End.Y
+
+	dx := float64(x1 - x0)
+	sx := 1
+	if dx < 0 {
+		sx = -1
+		dx = -dx
+	}
+
+	dy := float64(y1 - y0)
+	sy := 1
+	if dy < 0 {
+		sy = -1
+		dy = -dy
+	}
+
+	points := make([]Point, 0)
+
+	var err float64
+	x, y := x0, y0
+	if dx > dy {
+		err = dx / 2.0
+		for {
+			if x == x1 {
+				break
+			}
+			points = append(points, Point{x, y})
+
+			err -= dy
+			if err < 0 {
+				y += sy
+				err += dx
+			}
+			x += sx
+		}
+	} else {
+		err = dy / 2.0
+		for {
+			if y == y1 {
+				break
+			}
+			points = append(points, Point{x, y})
+
+			err -= dx
+			if err < 0 {
+				x += sx
+				err += dy
+			}
+			y += sy
+		}
+	}
+
+	points = append(points, Point{x, y})
+	return points
 }
