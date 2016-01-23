@@ -398,18 +398,21 @@ func TestPutLinesIntoBucketsReuseLineIfBucketsHaveSlightlyDifferent(t *testing.T
 }
 
 func TestPointsOnFragment(t *testing.T) {
-	fragment := Fragment{
-		Start: Point{0, 0},
-		End:   Point{5, 5},
+	examples := []struct {
+		fragment Fragment
+		points   []Point
+	}{
+		{
+			Fragment{Start: Point{0, 0}, End: Point{5, 5}},
+			[]Point{{0, 0}, {1, 1}, {2, 2}, {3, 3}, {4, 4}, {5, 5}},
+		},
+		{
+			Fragment{Start: Point{0, 1}, End: Point{6, 4}},
+			[]Point{{0, 1}, {1, 1}, {2, 2}, {3, 2}, {4, 3}, {5, 3}, {6, 4}},
+		},
 	}
-	expected := []Point{
-		{0, 0},
-		{1, 1},
-		{2, 2},
-		{3, 3},
-		{4, 4},
-		{5, 5},
+	for _, tt := range examples {
+		points := VisitPointsOnLineFragment(tt.fragment)
+		assert.EqualValues(t, tt.points, points)
 	}
-	actual := VisitPointsOnLineFragment(fragment)
-	assert.EqualValues(t, expected, actual)
 }
