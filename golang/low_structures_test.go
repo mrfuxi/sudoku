@@ -412,7 +412,7 @@ func TestPointsOnFragment(t *testing.T) {
 		},
 	}
 	for _, tt := range examples {
-		points := VisitPointsOnLineFragment(tt.fragment)
+		points := PointsOnLineFragment(tt.fragment)
 		assert.EqualValues(t, tt.points, points)
 	}
 }

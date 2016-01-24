@@ -230,15 +230,8 @@ func putLinesIntoBuckets(buckets map[float64][]Bucket, lines []Line) map[float64
 	return bucketed
 }
 
-func absInt(value int) int {
-	if value > 0 {
-		return value
-	}
-	return -value
-}
-
 // Bresenham's line algorithm
-func VisitPointsOnLineFragment(fragment Fragment) []Point {
+func PointsOnLineFragment(fragment Fragment) []Point {
 	x0, x1 := fragment.Start.X, fragment.End.X
 	y0, y1 := fragment.Start.Y, fragment.End.Y
 
@@ -263,10 +256,10 @@ func VisitPointsOnLineFragment(fragment Fragment) []Point {
 	if dx > dy {
 		err = dx / 2.0
 		for {
+			points = append(points, Point{x, y})
 			if x == x1 {
 				break
 			}
-			points = append(points, Point{x, y})
 
 			err -= dy
 			if err < 0 {
@@ -278,10 +271,10 @@ func VisitPointsOnLineFragment(fragment Fragment) []Point {
 	} else {
 		err = dy / 2.0
 		for {
+			points = append(points, Point{x, y})
 			if y == y1 {
 				break
 			}
-			points = append(points, Point{x, y})
 
 			err -= dx
 			if err < 0 {
@@ -292,6 +285,5 @@ func VisitPointsOnLineFragment(fragment Fragment) []Point {
 		}
 	}
 
-	points = append(points, Point{x, y})
 	return points
 }
