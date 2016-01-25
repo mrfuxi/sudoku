@@ -32,6 +32,10 @@ type Fragment struct {
 	End   Point
 }
 
+func (f Fragment) Length() float64 {
+	return f.Start.DistanceTo(f.End)
+}
+
 func similarAngles(a, b float64) bool {
 	minAngDiff := 0.5 // ~28deg
 

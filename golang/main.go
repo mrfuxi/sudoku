@@ -15,6 +15,7 @@ func main() {
 
 	var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 	var debug = flag.Bool("debug", false, "prepare debug images")
+	var file = flag.String("file", "s2.png", "file to process")
 
 	flag.Parse()
 	if *cpuprofile != "" {
@@ -26,7 +27,7 @@ func main() {
 		defer pprof.StopCPUProfile()
 	}
 
-	img, err := getExampleImage("s2.png")
+	img, err := getExampleImage(*file)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -38,7 +39,32 @@ func main() {
 	lines = removeDuplicateLines(lines, width, height)
 	bucketSize := 90 / 5
 	buckets := generateAngleBuckets(uint(bucketSize), uint(bucketSize/2.0), true)
-	putLinesIntoBuckets(buckets, lines)
+	bucketedLines := putLinesIntoBuckets(buckets, lines)
+
+	grids := make([]Grid, 0, 0)
+	for angle, line_class := range bucketedLines {
+		// don't even bother doing any more work
+		// it's not a 9x9 grid
+		if len(line_class) < 20 {
+			continue
+		}
+
+		vertical, horizontal := linesWithSimilarAngle(line_class, angle)
+
+		if len(vertical) < 10 || len(horizontal) < 10 {
+			continue
+		}
+
+		grids = append(grids, possibleGrids(horizontal, vertical)...)
+	}
+
+	evaluateGrids(preparedImg, grids)
+	if len(grids) != 0 {
+		bestGrid := grids[0]
+		fmt.Println("Best grid:", bestGrid.Score)
+		l := drawLines(img, append(bestGrid.Horizontal, bestGrid.Vertical...))
+		saveImage(l, *file)
+	}
 
 	t1 := time.Now()
 	fmt.Printf("The call took %v to run.\n", t1.Sub(t0))

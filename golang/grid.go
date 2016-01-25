@@ -1,8 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"math"
 	"sort"
+
+	"github.com/gonum/matrix/mat64"
 )
 
 type Grid struct {
@@ -88,12 +91,9 @@ func buildScoredLines(primary, secondary []Line, top uint) []ScoredLines {
 }
 
 func possibleGrids(horizontal, vertical []Line) []Grid {
-	if !sort.IsSorted(ByCount(vertical)) {
-		panic("should be sorted")
-	}
-	if !sort.IsSorted(ByCount(horizontal)) {
-		panic("should be sorted")
-	}
+	// Make sure lines are ordered correctly
+	sort.Sort(ByDistance(vertical))
+	sort.Sort(ByDistance(horizontal))
 
 	linesH := buildScoredLines(horizontal, vertical, 3)
 	linesV := buildScoredLines(vertical, horizontal, 3)
@@ -115,8 +115,52 @@ func possibleGrids(horizontal, vertical []Line) []Grid {
 	return grids
 }
 
+func evaluateGrids(image *mat64.Dense, grids []Grid) []Grid {
+	for _, grid := range grids {
+		hCount := len(grid.Horizontal)
+		vCount := len(grid.Vertical)
+		fragments := make([]Fragment, hCount+vCount)
+
+		firstVertLine := grid.Vertical[0]
+		lastVertLine := grid.Vertical[vCount-1]
+		for j, h := range grid.Horizontal {
+			_, start := intersection(h, firstVertLine)
+			_, end := intersection(h, lastVertLine)
+			fragments[j] = Fragment{start, end}
+		}
+
+		firstHorizLine := grid.Horizontal[0]
+		lastHorizLine := grid.Horizontal[hCount-1]
+		for j, h := range grid.Vertical {
+			_, start := intersection(h, firstHorizLine)
+			_, end := intersection(h, lastHorizLine)
+			fragments[hCount+j] = Fragment{start, end}
+		}
+
+		score := 0.0
+		for _, fragment := range fragments {
+			points := PointsOnLineFragment(fragment)
+			value := 1.0 / fragment.Length()
+			for _, point := range points {
+				if image.At(point.Y, point.X) != 0 {
+					score += value
+				}
+			}
+		}
+		fmt.Println("Score:", score/float64(len(fragments)))
+		grid.Score = grid.Score * score / float64(len(fragments))
+		// // max dark ink, so minimize it
+		// best = min(best, (score*line_score, grid))
+	}
+
+	sort.Sort(GridByScore(grids))
+
+	return grids
+}
+
 // Splits lines into groups of 10 with score of how much linearly distributed they are
 func linearDistances(lines []Line, dividerLine Line) []ScoredLines {
+	// Lines have to be sortd correctly!
 	matches := make([]ScoredLines, 0)
 
 	linesCount := len(lines)
