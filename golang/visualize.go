@@ -16,6 +16,7 @@ func drawLines(src image.Image, lines []Line) image.Image {
 	gc.SetStrokeColor(color.RGBA{0x0, 0xff, 0x0, 0xff})
 	gc.SetLineWidth(2)
 	gc.Clear()
+	gc.DrawImage(src)
 
 	for _, line := range lines {
 		a := math.Cos(line.Theta)
