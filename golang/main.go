@@ -3,31 +3,16 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"runtime/pprof"
+	"strings"
 	"time"
 )
 
-func main() {
-	os.RemoveAll(SaveLocation)
-	os.MkdirAll(SaveLocation, os.ModePerm)
-
-	var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
-	var debug = flag.Bool("debug", false, "prepare debug images")
-	var file = flag.String("file", "s2.png", "file to process")
-
-	flag.Parse()
-	if *cpuprofile != "" {
-		f, err := os.Create(*cpuprofile)
-		if err != nil {
-			log.Fatal(err)
-		}
-		pprof.StartCPUProfile(f)
-		defer pprof.StopCPUProfile()
-	}
-
-	img, err := getExampleImage(*file)
+func grid(filename string, debug bool) {
+	img, err := getExampleImage(filename)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -63,17 +48,50 @@ func main() {
 		bestGrid := grids[0]
 		fmt.Println("Best grid:", bestGrid.Score)
 		l := drawLines(img, append(bestGrid.Horizontal, bestGrid.Vertical...))
-		saveImage(l, *file)
+		saveImage(l, filename)
 	}
 
 	t1 := time.Now()
 	fmt.Printf("The call took %v to run.\n", t1.Sub(t0))
 
-	if *debug {
+	if debug {
 		j := matrixToImage(preparedImg)
 		saveImage(&j, "prepared.png")
 
 		l := drawLines(img, lines)
 		saveImage(l, "lines.png")
+	}
+}
+
+func main() {
+	os.RemoveAll(SaveLocation)
+	os.MkdirAll(SaveLocation, os.ModePerm)
+
+	var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
+	var debug = flag.Bool("debug", false, "prepare debug images")
+	var file = flag.String("file", "", "file to process")
+
+	flag.Parse()
+	if *cpuprofile != "" {
+		f, err := os.Create(*cpuprofile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		pprof.StartCPUProfile(f)
+		defer pprof.StopCPUProfile()
+	}
+
+	if *file != "" {
+		grid(*file, *debug)
+	} else {
+		fileInfos, err := ioutil.ReadDir(ExampleDir)
+		if err != nil {
+			log.Fatal(err)
+		}
+		for _, fileInfo := range fileInfos {
+			if strings.HasSuffix(fileInfo.Name(), ".png") {
+				grid(fileInfo.Name(), *debug)
+			}
+		}
 	}
 }
