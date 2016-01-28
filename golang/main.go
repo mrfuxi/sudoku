@@ -20,7 +20,7 @@ func grid(filename string, debug bool) {
 
 	t0 := time.Now()
 	preparedImg := PreProcess(img)
-	lines := HoughLines(preparedImg, nil, 80, 100)
+	lines := HoughLines(preparedImg, nil, 80, 200)
 	lines = removeDuplicateLines(lines, width, height)
 	bucketSize := 90 / 5
 	buckets := generateAngleBuckets(uint(bucketSize), uint(bucketSize/2.0), true)
@@ -46,7 +46,6 @@ func grid(filename string, debug bool) {
 	evaluateGrids(preparedImg, grids)
 	if len(grids) != 0 {
 		bestGrid := grids[0]
-		fmt.Println("Best grid:", bestGrid.Score)
 		l := drawLines(img, append(bestGrid.Horizontal, bestGrid.Vertical...))
 		saveImage(l, filename)
 	}

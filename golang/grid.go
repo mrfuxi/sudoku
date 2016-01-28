@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"math"
 	"sort"
 
@@ -147,10 +146,7 @@ func evaluateGrids(image *mat64.Dense, grids []Grid) []Grid {
 				}
 			}
 		}
-		fmt.Println("Score:", score/float64(len(fragments)))
 		grid.Score = grid.Score * score / float64(len(fragments))
-		// // max dark ink, so minimize it
-		// best = min(best, (score*line_score, grid))
 	}
 
 	sort.Sort(GridByScore(grids))
