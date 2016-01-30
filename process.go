@@ -1,4 +1,4 @@
-package main
+package sudoku
 
 import (
 	"image"
@@ -9,21 +9,6 @@ import (
 
 	"github.com/gonum/matrix/mat64"
 )
-
-const (
-	ExampleDir   = "../examples/"
-	SaveLocation = "examples_out"
-)
-
-func getExampleImage(name string) (image.Image, error) {
-	filePath := path.Join(ExampleDir, name)
-	reader, err := os.Open(filePath)
-	if err != nil {
-		return nil, err
-	}
-
-	return png.Decode(reader)
-}
 
 func saveImage(image image.Image, name string) error {
 	filePath := path.Join("examples_out", name)
