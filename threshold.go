@@ -7,15 +7,15 @@ import (
 	"github.com/gonum/matrix/mat64"
 )
 
-type ThresholdType int
+type thresholdType int
 
 const (
-	ThreshBinary ThresholdType = iota
-	ThreshBinaryInv
+	threshBinary thresholdType = iota
+	threshBinaryInv
 )
 
 var (
-	ErrBlockSize = errors.New("Incorrect block size. Has to be odd number greater than 1.")
+	errBlockSize = errors.New("Incorrect block size. Has to be odd number greater than 1.")
 )
 
 func viewValues(start, ksize, total int) (newStart int, newNum int) {
@@ -57,9 +57,9 @@ func meanFilter(src *mat64.Dense, ksize int) (dst *mat64.Dense) {
 	return
 }
 
-func AdaptiveThreshold(src *mat64.Dense, maxValue float64, thresholdType ThresholdType, blockSize int, delta float64) (dst *mat64.Dense) {
+func adaptiveThreshold(src *mat64.Dense, maxValue float64, threshold thresholdType, blockSize int, delta float64) (dst *mat64.Dense) {
 	if blockSize%2 != 1 || blockSize < 1 {
-		panic(ErrBlockSize)
+		panic(errBlockSize)
 	}
 
 	if maxValue < 0 {
@@ -73,11 +73,11 @@ func AdaptiveThreshold(src *mat64.Dense, maxValue float64, thresholdType Thresho
 			newVal := 0.0
 			dstVal := dst.At(row, col) - delta
 			srcVal := src.At(row, col)
-			if thresholdType == ThreshBinary {
+			if threshold == threshBinary {
 				if srcVal > dstVal {
 					newVal = maxValue
 				}
-			} else if thresholdType == ThreshBinaryInv {
+			} else if threshold == threshBinaryInv {
 				if srcVal < dstVal {
 					newVal = maxValue
 				}

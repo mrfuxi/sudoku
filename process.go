@@ -75,10 +75,10 @@ func binarize(src *mat64.Dense) (dst *mat64.Dense) {
 
 	window := max / 10
 	if window%2 == 0 {
-		window += 1
+		window++
 	}
 
-	return AdaptiveThreshold(src, 1, ThreshBinaryInv, window, 0)
+	return adaptiveThreshold(src, 1, threshBinaryInv, window, 0)
 }
 
 // Removes body of regions over 1/20 of image width/height
@@ -91,17 +91,17 @@ func removeBlobsBody(src *mat64.Dense) (dst *mat64.Dense) {
 
 	window := max / 20
 	if window%2 == 0 {
-		window += 1
+		window++
 	}
 
-	return AdaptiveThreshold(src, 1, ThreshBinary, window, -0.5)
+	return adaptiveThreshold(src, 1, threshBinary, window, -0.5)
 }
 
 // PreProcess prepares original image for actual work
 // - coverts to gray scale
 // - threshold to produce binary image
 // - removes some of big areas/blobs
-func PreProcess(img image.Image) *mat64.Dense {
+func preProcess(img image.Image) *mat64.Dense {
 	grayImg := grayImage(img)
 	grayMat := imageToMatrix(grayImg)
 

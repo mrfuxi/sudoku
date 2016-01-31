@@ -23,7 +23,7 @@ func TestGenerateThetas(t *testing.T) {
 	}
 
 	for _, tt := range examples {
-		thetas := GenerateThetas(tt.start, tt.end, tt.step)
+		thetas := generateThetas(tt.start, tt.end, tt.step)
 		if !assert.InDeltaSlice(t, tt.thetas, thetas, 0.01) {
 			t.Logf("For theta: %v, %v, %v", tt.start, tt.end, tt.step)
 		}
@@ -38,18 +38,18 @@ func TestHoughLines(t *testing.T) {
 	timg.Set(200, 10, 1.0)
 	timg.Set(400, 10, 1.0)
 
-	lines := HoughLines(timg, nil, 0, 10)
+	lines := houghLines(timg, nil, 0, 10)
 	if !assert.Len(t, lines, 6) {
 		t.FailNow()
 	}
 
-	expectedLines := []Line{
-		Line{Theta: 1.570796, Distance: 10, Count: 3},
-		Line{Theta: 0.000000, Distance: 10, Count: 3},
-		Line{Theta: 0.785398, Distance: 148, Count: 2},
-		Line{Theta: 0.453786, Distance: 184, Count: 2},
-		Line{Theta: 1.117011, Distance: 184, Count: 2},
-		Line{Theta: 0.785398, Distance: 290, Count: 2},
+	expectedLines := []polarLine{
+		polarLine{Theta: 1.570796, Distance: 10, Count: 3},
+		polarLine{Theta: 0.000000, Distance: 10, Count: 3},
+		polarLine{Theta: 0.785398, Distance: 148, Count: 2},
+		polarLine{Theta: 0.453786, Distance: 184, Count: 2},
+		polarLine{Theta: 1.117011, Distance: 184, Count: 2},
+		polarLine{Theta: 0.785398, Distance: 290, Count: 2},
 	}
 	for i, line := range lines {
 		expected := expectedLines[i]

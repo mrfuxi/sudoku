@@ -5,34 +5,56 @@ import (
 	"fmt"
 	"image"
 	"time"
+
+	"github.com/gonum/matrix/mat64"
 )
 
-var NotRecognisedErr = errors.New("Could not find sudoku on the image")
+// ErrNotRecognised is reported when sudoku could not be localized on image
+var ErrNotRecognised = errors.New("Could not find sudoku on the image")
 
-type Sudoku struct {
-	Image image.Image
+// Sudoku interface describes access to recognised sudoku puzzle
+type Sudoku interface {
+	Overlay() image.Image
 }
 
+type lineSudoku struct {
+	BaseImage    image.Image
+	PreProcessed *mat64.Dense
+	Grid         lineGrid
+	Recognised   bool
+}
+
+func (l *lineSudoku) Overlay() image.Image {
+	if !l.Recognised {
+		return nil
+	}
+	return drawLines(l.BaseImage, append(l.Grid.Horizontal, l.Grid.Vertical...))
+}
+
+// NewSudoku processes given image in order to find sudoku puzzle on the image
 func NewSudoku(image image.Image) (s Sudoku, err error) {
-	width, height := image.Bounds().Max.X, image.Bounds().Max.Y
+	sudoku := &lineSudoku{
+		BaseImage: image,
+	}
+	width, height := sudoku.BaseImage.Bounds().Max.X, sudoku.BaseImage.Bounds().Max.Y
 
 	t0 := time.Now()
-	preparedImg := PreProcess(image)
-	lines := HoughLines(preparedImg, nil, 80, 200)
+	sudoku.PreProcessed = preProcess(sudoku.BaseImage)
+	lines := houghLines(sudoku.PreProcessed, nil, 80, 200)
 	lines = removeDuplicateLines(lines, width, height)
 	bucketSize := 90 / 5
 	buckets := generateAngleBuckets(uint(bucketSize), uint(bucketSize/2.0), true)
 	bucketedLines := putLinesIntoBuckets(buckets, lines)
 
-	grids := make([]Grid, 0, 0)
-	for angle, line_class := range bucketedLines {
+	grids := make([]lineGrid, 0, 0)
+	for angle, lineClass := range bucketedLines {
 		// don't even bother doing any more work
 		// it's not a 9x9 grid
-		if len(line_class) < 20 {
+		if len(lineClass) < 20 {
 			continue
 		}
 
-		vertical, horizontal := linesWithSimilarAngle(line_class, angle)
+		vertical, horizontal := linesWithSimilarAngle(lineClass, angle)
 
 		if len(vertical) < 10 || len(horizontal) < 10 {
 			continue
@@ -41,25 +63,14 @@ func NewSudoku(image image.Image) (s Sudoku, err error) {
 		grids = append(grids, possibleGrids(horizontal, vertical)...)
 	}
 
-	evaluateGrids(preparedImg, grids)
+	evaluateGrids(sudoku.PreProcessed, grids)
 	if len(grids) != 0 {
-		bestGrid := grids[0]
-		l := drawLines(image, append(bestGrid.Horizontal, bestGrid.Vertical...))
-		s.Image = l
+		sudoku.Grid = grids[0] // Best grid
 	} else {
-		err = NotRecognisedErr
+		err = ErrNotRecognised
 	}
 
 	t1 := time.Now()
-	fmt.Printf("The call took %v to run.\n", t1.Sub(t0))
-
-	// if debug {
-	// 	j := matrixToImage(preparedImg)
-	// 	saveImage(&j, "prepared.png")
-
-	// 	l := drawLines(image, lines)
-	// 	saveImage(l, "lines.png")
-	// }
-
-	return
+	fmt.Printf("Time to find Sudoku %v\n", t1.Sub(t0))
+	return sudoku, err
 }

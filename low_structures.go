@@ -9,30 +9,30 @@ import (
 
 const pi2 = 2 * math.Pi
 
-type Bucket struct {
+type angleBucket struct {
 	Start float64
 	End   float64
 }
 
-func (b Bucket) String() string {
+func (b angleBucket) String() string {
 	return fmt.Sprintf("Bucket{%.0f, %.0f}", b.Start*180/math.Pi, b.End*180/math.Pi)
 }
 
-type Point struct {
+type xyPoint struct {
 	X int
 	Y int
 }
 
-func (p Point) DistanceTo(other Point) float64 {
+func (p xyPoint) DistanceTo(other xyPoint) float64 {
 	return math.Hypot(float64(p.X-other.X), float64(p.Y-other.Y))
 }
 
-type Fragment struct {
-	Start Point
-	End   Point
+type lineFragment struct {
+	Start xyPoint
+	End   xyPoint
 }
 
-func (f Fragment) Length() float64 {
+func (f lineFragment) Length() float64 {
 	return f.Start.DistanceTo(f.End)
 }
 
@@ -61,7 +61,7 @@ func similarAngles(a, b float64) bool {
 //
 // As matrix:
 // A*X = b
-func intersection(lineA, lineB Line) (bool, Point) {
+func intersection(lineA, lineB polarLine) (bool, xyPoint) {
 	A := mat64.NewDense(2, 2, []float64{
 		math.Cos(lineA.Theta), math.Sin(lineA.Theta),
 		math.Cos(lineB.Theta), math.Sin(lineB.Theta),
@@ -74,7 +74,7 @@ func intersection(lineA, lineB Line) (bool, Point) {
 
 	ok := err == nil
 	// Using 0.5 to force round to nearest int rather than Floor
-	point := Point{
+	point := xyPoint{
 		X: int(x.At(0, 0) + 0.5),
 		Y: int(x.At(1, 0) + 0.5),
 	}
@@ -82,7 +82,7 @@ func intersection(lineA, lineB Line) (bool, Point) {
 }
 
 // duplicates: crosses in view at low angle
-func removeDuplicateLines(lines []Line, width, height int) []Line {
+func removeDuplicateLines(lines []polarLine, width, height int) []polarLine {
 	minDist := 3.0
 
 	scope := 2
@@ -121,7 +121,7 @@ func removeDuplicateLines(lines []Line, width, height int) []Line {
 		}
 	}
 
-	deDuped := make([]Line, len(lines)-len(toRemove))
+	deDuped := make([]polarLine, len(lines)-len(toRemove))
 	j := 0
 	for i, line := range lines {
 		if toRemove[i] {
@@ -142,7 +142,7 @@ func removeDuplicateLines(lines []Line, width, height int) []Line {
 //         45: [(35, 55), (125, 145)],
 //         50: [(40, 60), (130, 150)],
 //     }
-func generateAngleBuckets(bucketSize uint, step uint, ortogonal bool) map[float64][]Bucket {
+func generateAngleBuckets(bucketSize uint, step uint, ortogonal bool) map[float64][]angleBucket {
 	const DegToRad float64 = math.Pi / 180
 
 	window := DegToRad * float64(bucketSize)
@@ -154,29 +154,29 @@ func generateAngleBuckets(bucketSize uint, step uint, ortogonal bool) map[float6
 		maxPos = math.Pi / 2
 	}
 	maxPos = maxPos - stepSize
-	buckets := make(map[float64][]Bucket, 0)
+	buckets := make(map[float64][]angleBucket, 0)
 
 	pos := 0.0
 	for {
-		b1 := Bucket{pos - window2, pos + window2}
-		bucket := []Bucket{b1}
+		b1 := angleBucket{pos - window2, pos + window2}
+		bucket := []angleBucket{b1}
 
 		if b1.Start < 0 {
-			b1Prim := Bucket{math.Pi + b1.Start, math.Pi}
+			b1Prim := angleBucket{math.Pi + b1.Start, math.Pi}
 			bucket = append(bucket, b1Prim)
 		}
 
 		if b1.End > math.Pi {
-			b1Bis := Bucket{0, b1.End - math.Pi}
+			b1Bis := angleBucket{0, b1.End - math.Pi}
 			bucket = append(bucket, b1Bis)
 		}
 
 		if ortogonal {
-			b2 := Bucket{b1.Start + math.Pi/2, b1.End + math.Pi/2}
+			b2 := angleBucket{b1.Start + math.Pi/2, b1.End + math.Pi/2}
 			bucket = append(bucket, b2)
 
 			if b2.End > math.Pi {
-				b2Prim := Bucket{0, b2.End - math.Pi}
+				b2Prim := angleBucket{0, b2.End - math.Pi}
 				bucket = append(bucket, b2Prim)
 			}
 		}
@@ -194,9 +194,9 @@ func generateAngleBuckets(bucketSize uint, step uint, ortogonal bool) map[float6
 
 // Splits lines into two groups one that are similar to given angle,
 // and the rest of lines
-func linesWithSimilarAngle(lines []Line, angle float64) ([]Line, []Line) {
-	similar := make([]Line, 0)
-	other := make([]Line, 0)
+func linesWithSimilarAngle(lines []polarLine, angle float64) ([]polarLine, []polarLine) {
+	similar := make([]polarLine, 0)
+	other := make([]polarLine, 0)
 
 	for _, line := range lines {
 		if similarAngles(line.Theta, angle) {
@@ -209,12 +209,12 @@ func linesWithSimilarAngle(lines []Line, angle float64) ([]Line, []Line) {
 	return similar, other
 }
 
-func putLinesIntoBuckets(buckets map[float64][]Bucket, lines []Line) map[float64][]Line {
-	bucketed := make(map[float64][]Line, 0)
+func putLinesIntoBuckets(buckets map[float64][]angleBucket, lines []polarLine) map[float64][]polarLine {
+	bucketed := make(map[float64][]polarLine, 0)
 	alreadyMatched := make(map[string]bool, 0)
 
 	for angle, bucket := range buckets {
-		matches := make([]Line, 0)
+		matches := make([]polarLine, 0)
 
 		for _, line := range lines {
 			for _, b := range bucket {
@@ -225,7 +225,7 @@ func putLinesIntoBuckets(buckets map[float64][]Bucket, lines []Line) map[float64
 			}
 		}
 
-		matchesKey := LineHash(matches).HashKey()
+		matchesKey := polarLineHash(matches).HashKey()
 		if len(matches) > 0 && !alreadyMatched[matchesKey] {
 			alreadyMatched[matchesKey] = true
 			bucketed[angle] = matches
@@ -235,7 +235,7 @@ func putLinesIntoBuckets(buckets map[float64][]Bucket, lines []Line) map[float64
 }
 
 // Bresenham's line algorithm
-func PointsOnLineFragment(fragment Fragment) []Point {
+func pointsOnLineFragment(fragment lineFragment) []xyPoint {
 	x0, x1 := fragment.Start.X, fragment.End.X
 	y0, y1 := fragment.Start.Y, fragment.End.Y
 
@@ -253,14 +253,14 @@ func PointsOnLineFragment(fragment Fragment) []Point {
 		dy = -dy
 	}
 
-	points := make([]Point, 0)
+	points := make([]xyPoint, 0)
 
 	var err float64
 	x, y := x0, y0
 	if dx > dy {
 		err = dx / 2.0
 		for {
-			points = append(points, Point{x, y})
+			points = append(points, xyPoint{x, y})
 			if x == x1 {
 				break
 			}
@@ -275,7 +275,7 @@ func PointsOnLineFragment(fragment Fragment) []Point {
 	} else {
 		err = dy / 2.0
 		for {
-			points = append(points, Point{x, y})
+			points = append(points, xyPoint{x, y})
 			if y == y1 {
 				break
 			}

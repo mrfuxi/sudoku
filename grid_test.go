@@ -75,85 +75,85 @@ func TestPointSimilarities(t *testing.T) {
 }
 
 func TestLinearDistances(t *testing.T) {
-	lines := []Line{
-		Line{Theta: 0, Distance: -10}, // odd
-		Line{Theta: 0, Distance: 10},
-		Line{Theta: 0, Distance: 15}, // odd
-		Line{Theta: 0, Distance: 20},
-		Line{Theta: 0, Distance: 30},
-		Line{Theta: 0, Distance: 40},
-		Line{Theta: 0, Distance: 50},
-		Line{Theta: 0, Distance: 53}, // odd
-		Line{Theta: 0, Distance: 55}, // odd
-		Line{Theta: 0, Distance: 60},
-		Line{Theta: 0, Distance: 70},
-		Line{Theta: 0, Distance: 80},
-		Line{Theta: 0, Distance: 90},
-		Line{Theta: 0, Distance: 101}, // slightly off
-		Line{Theta: 0, Distance: 111}, // slightly off
-		Line{Theta: 0, Distance: 120},
-		Line{Theta: 0, Distance: 130},
+	lines := []polarLine{
+		polarLine{Theta: 0, Distance: -10}, // odd
+		polarLine{Theta: 0, Distance: 10},
+		polarLine{Theta: 0, Distance: 15}, // odd
+		polarLine{Theta: 0, Distance: 20},
+		polarLine{Theta: 0, Distance: 30},
+		polarLine{Theta: 0, Distance: 40},
+		polarLine{Theta: 0, Distance: 50},
+		polarLine{Theta: 0, Distance: 53}, // odd
+		polarLine{Theta: 0, Distance: 55}, // odd
+		polarLine{Theta: 0, Distance: 60},
+		polarLine{Theta: 0, Distance: 70},
+		polarLine{Theta: 0, Distance: 80},
+		polarLine{Theta: 0, Distance: 90},
+		polarLine{Theta: 0, Distance: 101}, // slightly off
+		polarLine{Theta: 0, Distance: 111}, // slightly off
+		polarLine{Theta: 0, Distance: 120},
+		polarLine{Theta: 0, Distance: 130},
 	}
-	dividerLine := Line{Theta: math.Pi / 2, Distance: 0}
+	dividerLine := polarLine{Theta: math.Pi / 2, Distance: 0}
 
-	expectedScoredLines := []ScoredLines{
+	expectedScoredLines := []scoredLines{
 		{
-			Lines: []Line{
-				Line{Theta: 0, Distance: 10},
-				Line{Theta: 0, Distance: 20},
-				Line{Theta: 0, Distance: 30},
-				Line{Theta: 0, Distance: 40},
-				Line{Theta: 0, Distance: 50},
-				Line{Theta: 0, Distance: 60},
-				Line{Theta: 0, Distance: 70},
-				Line{Theta: 0, Distance: 80},
-				Line{Theta: 0, Distance: 90},
-				Line{Theta: 0, Distance: 101},
+			Lines: []polarLine{
+				polarLine{Theta: 0, Distance: 10},
+				polarLine{Theta: 0, Distance: 20},
+				polarLine{Theta: 0, Distance: 30},
+				polarLine{Theta: 0, Distance: 40},
+				polarLine{Theta: 0, Distance: 50},
+				polarLine{Theta: 0, Distance: 60},
+				polarLine{Theta: 0, Distance: 70},
+				polarLine{Theta: 0, Distance: 80},
+				polarLine{Theta: 0, Distance: 90},
+				polarLine{Theta: 0, Distance: 101},
 			},
 			Score: 0.9804,
 		},
 		{
-			Lines: []Line{
-				Line{Theta: 0, Distance: 20},
-				Line{Theta: 0, Distance: 30},
-				Line{Theta: 0, Distance: 40},
-				Line{Theta: 0, Distance: 50},
-				Line{Theta: 0, Distance: 60},
-				Line{Theta: 0, Distance: 70},
-				Line{Theta: 0, Distance: 80},
-				Line{Theta: 0, Distance: 90},
-				Line{Theta: 0, Distance: 101},
-				Line{Theta: 0, Distance: 111},
+			Lines: []polarLine{
+				polarLine{Theta: 0, Distance: 20},
+				polarLine{Theta: 0, Distance: 30},
+				polarLine{Theta: 0, Distance: 40},
+				polarLine{Theta: 0, Distance: 50},
+				polarLine{Theta: 0, Distance: 60},
+				polarLine{Theta: 0, Distance: 70},
+				polarLine{Theta: 0, Distance: 80},
+				polarLine{Theta: 0, Distance: 90},
+				polarLine{Theta: 0, Distance: 101},
+				polarLine{Theta: 0, Distance: 111},
 			},
 			Score: 0.9804,
 		},
 		{
-			Lines: []Line{
-				Line{Theta: 0, Distance: 30},
-				Line{Theta: 0, Distance: 40},
-				Line{Theta: 0, Distance: 50},
-				Line{Theta: 0, Distance: 60},
-				Line{Theta: 0, Distance: 70},
-				Line{Theta: 0, Distance: 80},
-				Line{Theta: 0, Distance: 90},
-				Line{Theta: 0, Distance: 101},
-				Line{Theta: 0, Distance: 111},
-				Line{Theta: 0, Distance: 120},
+			Lines: []polarLine{
+				polarLine{Theta: 0, Distance: 30},
+				polarLine{Theta: 0, Distance: 40},
+				polarLine{Theta: 0, Distance: 50},
+				polarLine{Theta: 0, Distance: 60},
+				polarLine{Theta: 0, Distance: 70},
+				polarLine{Theta: 0, Distance: 80},
+				polarLine{Theta: 0, Distance: 90},
+				polarLine{Theta: 0, Distance: 101},
+				polarLine{Theta: 0, Distance: 111},
+				polarLine{Theta: 0, Distance: 120},
 			},
 			Score: 0.9777,
 		},
 		{
-			Lines: []Line{
-				Line{Theta: 0, Distance: 40},
-				Line{Theta: 0, Distance: 50},
-				Line{Theta: 0, Distance: 60},
-				Line{Theta: 0, Distance: 70},
-				Line{Theta: 0, Distance: 80},
-				Line{Theta: 0, Distance: 90},
-				Line{Theta: 0, Distance: 101},
-				Line{Theta: 0, Distance: 111},
-				Line{Theta: 0, Distance: 120},
-				Line{Theta: 0, Distance: 130},
+			Lines: []polarLine{
+				polarLine{Theta: 0, Distance: 40},
+				polarLine{Theta: 0, Distance: 50},
+				polarLine{Theta: 0, Distance: 60},
+				polarLine{Theta: 0, Distance: 70},
+				polarLine{Theta: 0, Distance: 80},
+				polarLine{Theta: 0, Distance: 90},
+				polarLine{Theta: 0, Distance: 101},
+				polarLine{Theta: 0, Distance: 111},
+				polarLine{Theta: 0, Distance: 120},
+				polarLine{Theta: 0, Distance: 130},
 			},
 			Score: 0.9777,
 		},
@@ -170,69 +170,69 @@ func TestLinearDistances(t *testing.T) {
 }
 
 func TestPossibleGrids(t *testing.T) {
-	linesH := []Line{
-		Line{Theta: 0, Distance: -10}, // odd
-		Line{Theta: 0, Distance: 10},
-		Line{Theta: 0, Distance: 15}, // odd
-		Line{Theta: 0, Distance: 20},
-		Line{Theta: 0, Distance: 30},
-		Line{Theta: 0, Distance: 40},
-		Line{Theta: 0, Distance: 50},
-		Line{Theta: 0, Distance: 53}, // odd
-		Line{Theta: 0, Distance: 55}, // odd
-		Line{Theta: 0, Distance: 60},
-		Line{Theta: 0, Distance: 70},
-		Line{Theta: 0, Distance: 80},
-		Line{Theta: 0, Distance: 90},
-		Line{Theta: 0, Distance: 101}, // slightly off
-		Line{Theta: 0, Distance: 110},
-		Line{Theta: 0, Distance: 120},
-		Line{Theta: 0, Distance: 130},
+	linesH := []polarLine{
+		polarLine{Theta: 0, Distance: -10}, // odd
+		polarLine{Theta: 0, Distance: 10},
+		polarLine{Theta: 0, Distance: 15}, // odd
+		polarLine{Theta: 0, Distance: 20},
+		polarLine{Theta: 0, Distance: 30},
+		polarLine{Theta: 0, Distance: 40},
+		polarLine{Theta: 0, Distance: 50},
+		polarLine{Theta: 0, Distance: 53}, // odd
+		polarLine{Theta: 0, Distance: 55}, // odd
+		polarLine{Theta: 0, Distance: 60},
+		polarLine{Theta: 0, Distance: 70},
+		polarLine{Theta: 0, Distance: 80},
+		polarLine{Theta: 0, Distance: 90},
+		polarLine{Theta: 0, Distance: 101}, // slightly off
+		polarLine{Theta: 0, Distance: 110},
+		polarLine{Theta: 0, Distance: 120},
+		polarLine{Theta: 0, Distance: 130},
 	}
-	linesV := []Line{
-		Line{Theta: math.Pi / 2, Distance: -10}, // odd
-		Line{Theta: math.Pi / 2, Distance: 10},
-		Line{Theta: math.Pi / 2, Distance: 15}, // odd
-		Line{Theta: math.Pi / 2, Distance: 20},
-		Line{Theta: math.Pi / 2, Distance: 30},
-		Line{Theta: math.Pi / 2, Distance: 40},
-		Line{Theta: math.Pi / 2, Distance: 50},
-		Line{Theta: math.Pi / 2, Distance: 53}, // odd
-		Line{Theta: math.Pi / 2, Distance: 55}, // odd
-		Line{Theta: math.Pi / 2, Distance: 60},
-		Line{Theta: math.Pi / 2, Distance: 70},
-		Line{Theta: math.Pi / 2, Distance: 80},
-		Line{Theta: math.Pi / 2, Distance: 90},
-		Line{Theta: math.Pi / 2, Distance: 101}, // slightly off
-		Line{Theta: math.Pi / 2, Distance: 111}, // slightly off
-		Line{Theta: math.Pi / 2, Distance: 120},
-		Line{Theta: math.Pi / 2, Distance: 130},
+	linesV := []polarLine{
+		polarLine{Theta: math.Pi / 2, Distance: -10}, // odd
+		polarLine{Theta: math.Pi / 2, Distance: 10},
+		polarLine{Theta: math.Pi / 2, Distance: 15}, // odd
+		polarLine{Theta: math.Pi / 2, Distance: 20},
+		polarLine{Theta: math.Pi / 2, Distance: 30},
+		polarLine{Theta: math.Pi / 2, Distance: 40},
+		polarLine{Theta: math.Pi / 2, Distance: 50},
+		polarLine{Theta: math.Pi / 2, Distance: 53}, // odd
+		polarLine{Theta: math.Pi / 2, Distance: 55}, // odd
+		polarLine{Theta: math.Pi / 2, Distance: 60},
+		polarLine{Theta: math.Pi / 2, Distance: 70},
+		polarLine{Theta: math.Pi / 2, Distance: 80},
+		polarLine{Theta: math.Pi / 2, Distance: 90},
+		polarLine{Theta: math.Pi / 2, Distance: 101}, // slightly off
+		polarLine{Theta: math.Pi / 2, Distance: 111}, // slightly off
+		polarLine{Theta: math.Pi / 2, Distance: 120},
+		polarLine{Theta: math.Pi / 2, Distance: 130},
 	}
 
-	firstExpectedGrid := Grid{
-		Horizontal: []Line{
-			Line{Theta: 0, Distance: 10},
-			Line{Theta: 0, Distance: 20},
-			Line{Theta: 0, Distance: 30},
-			Line{Theta: 0, Distance: 40},
-			Line{Theta: 0, Distance: 50},
-			Line{Theta: 0, Distance: 60},
-			Line{Theta: 0, Distance: 70},
-			Line{Theta: 0, Distance: 80},
-			Line{Theta: 0, Distance: 90},
-			Line{Theta: 0, Distance: 101},
+	firstExpectedGrid := lineGrid{
+		Horizontal: []polarLine{
+			polarLine{Theta: 0, Distance: 10},
+			polarLine{Theta: 0, Distance: 20},
+			polarLine{Theta: 0, Distance: 30},
+			polarLine{Theta: 0, Distance: 40},
+			polarLine{Theta: 0, Distance: 50},
+			polarLine{Theta: 0, Distance: 60},
+			polarLine{Theta: 0, Distance: 70},
+			polarLine{Theta: 0, Distance: 80},
+			polarLine{Theta: 0, Distance: 90},
+			polarLine{Theta: 0, Distance: 101},
 		},
-		Vertical: []Line{
-			Line{Theta: math.Pi / 2, Distance: 10},
-			Line{Theta: math.Pi / 2, Distance: 20},
-			Line{Theta: math.Pi / 2, Distance: 30},
-			Line{Theta: math.Pi / 2, Distance: 40},
-			Line{Theta: math.Pi / 2, Distance: 50},
-			Line{Theta: math.Pi / 2, Distance: 60},
-			Line{Theta: math.Pi / 2, Distance: 70},
-			Line{Theta: math.Pi / 2, Distance: 80},
-			Line{Theta: math.Pi / 2, Distance: 90},
-			Line{Theta: math.Pi / 2, Distance: 101},
+		Vertical: []polarLine{
+			polarLine{Theta: math.Pi / 2, Distance: 10},
+			polarLine{Theta: math.Pi / 2, Distance: 20},
+			polarLine{Theta: math.Pi / 2, Distance: 30},
+			polarLine{Theta: math.Pi / 2, Distance: 40},
+			polarLine{Theta: math.Pi / 2, Distance: 50},
+			polarLine{Theta: math.Pi / 2, Distance: 60},
+			polarLine{Theta: math.Pi / 2, Distance: 70},
+			polarLine{Theta: math.Pi / 2, Distance: 80},
+			polarLine{Theta: math.Pi / 2, Distance: 90},
+			polarLine{Theta: math.Pi / 2, Distance: 101},
 		},
 		Score: 0.98046 * 0.98046,
 	}

@@ -8,7 +8,7 @@ import (
 	"github.com/llgcode/draw2d/draw2dimg"
 )
 
-func drawLines(src image.Image, lines []Line) image.Image {
+func drawLines(src image.Image, lines []polarLine) image.Image {
 	dst := image.NewRGBA(src.Bounds())
 
 	gc := draw2dimg.NewGraphicContext(dst)

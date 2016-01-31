@@ -11,23 +11,23 @@ import (
 	"github.com/gonum/matrix/mat64"
 )
 
-type Line struct {
+type polarLine struct {
 	Theta    float64
 	Distance int
 	Count    uint64
 }
 
-func (l Line) String() string {
+func (l polarLine) String() string {
 	return fmt.Sprintf("Line{Theta: %f, Distance: %d, Count: %d}", l.Theta, l.Distance, l.Count)
 }
 
-func (l Line) HashKey() string {
+func (l polarLine) HashKey() string {
 	return fmt.Sprintf("%0.8f:%d", l.Theta, l.Distance)
 }
 
-type LineHash []Line
+type polarLineHash []polarLine
 
-func (l LineHash) HashKey() string {
+func (l polarLineHash) HashKey() string {
 	var buffer bytes.Buffer
 	for _, line := range l {
 		buffer.WriteString(line.String())
@@ -35,19 +35,19 @@ func (l LineHash) HashKey() string {
 	return buffer.String()
 }
 
-type ByCount []Line
+type polarLinesByCount []polarLine
 
-func (a ByCount) Len() int           { return len(a) }
-func (a ByCount) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a ByCount) Less(i, j int) bool { return a[i].Count > a[j].Count } // Reversed order most to least
+func (a polarLinesByCount) Len() int           { return len(a) }
+func (a polarLinesByCount) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a polarLinesByCount) Less(i, j int) bool { return a[i].Count > a[j].Count } // Reversed order most to least
 
-type ByDistance []Line
+type polarLinesByDistance []polarLine
 
-func (a ByDistance) Len() int           { return len(a) }
-func (a ByDistance) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a ByDistance) Less(i, j int) bool { return a[i].Distance < a[j].Distance }
+func (a polarLinesByDistance) Len() int           { return len(a) }
+func (a polarLinesByDistance) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a polarLinesByDistance) Less(i, j int) bool { return a[i].Distance < a[j].Distance }
 
-func GenerateThetas(start, end, step float64) (thetas []float64) {
+func generateThetas(start, end, step float64) (thetas []float64) {
 	count := int((end-start)/step) + 1
 	thetas = make([]float64, count, count)
 	theta := start
@@ -58,9 +58,9 @@ func GenerateThetas(start, end, step float64) (thetas []float64) {
 	return thetas
 }
 
-func HoughLines(src *mat64.Dense, thetas []float64, threshold uint64, limit int) []Line {
+func houghLines(src *mat64.Dense, thetas []float64, threshold uint64, limit int) []polarLine {
 	if thetas == nil {
-		thetas = GenerateThetas(-math.Pi/2, math.Pi/2, math.Pi/180.0)
+		thetas = generateThetas(-math.Pi/2, math.Pi/2, math.Pi/180.0)
 	}
 	rows, cols := src.Dims()
 	maxR := 2 * math.Hypot(float64(cols), float64(rows))
@@ -100,7 +100,7 @@ func HoughLines(src *mat64.Dense, thetas []float64, threshold uint64, limit int)
 	wg.Wait()
 
 	linesSet := make(map[string]bool)
-	lines := make([]Line, 0)
+	var lines []polarLine
 	for i := range hAcc {
 		r := i - int(offset)
 		thetaOffset := 0.0
@@ -113,7 +113,7 @@ func HoughLines(src *mat64.Dense, thetas []float64, threshold uint64, limit int)
 				continue
 			}
 
-			line := Line{
+			line := polarLine{
 				Theta:    thetas[j] + thetaOffset,
 				Distance: r,
 				Count:    count,
@@ -125,7 +125,7 @@ func HoughLines(src *mat64.Dense, thetas []float64, threshold uint64, limit int)
 		}
 	}
 
-	sort.Sort(ByCount(lines))
+	sort.Sort(polarLinesByCount(lines))
 
 	if limit > 0 && len(lines) > limit {
 		lines = lines[:limit]
