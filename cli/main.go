@@ -4,7 +4,8 @@ import (
 	"flag"
 	"fmt"
 	"image"
-	"image/png"
+	_ "image/jpeg"
+	_ "image/png"
 	"io/ioutil"
 	"log"
 	"os"
@@ -27,16 +28,17 @@ func getExampleImage(name string) (image.Image, error) {
 		return nil, err
 	}
 
-	return png.Decode(reader)
+	img, _, err := image.Decode(reader)
+	return img, err
 }
 
-func findSudoku(filename string, debug bool) {
+func findSudoku(filename string, debug bool) (sudoku.Sudoku, error) {
 	img, err := getExampleImage(filename)
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	sudoku.NewSudoku(img)
+	return sudoku.NewSudoku(img)
 }
 
 func main() {
@@ -57,8 +59,11 @@ func main() {
 		defer pprof.StopCPUProfile()
 	}
 
+	var s sudoku.Sudoku
+	var err error
+
 	if *file != "" {
-		findSudoku(*file, *debug)
+		s, err = findSudoku(*file, *debug)
 	} else {
 		fileInfos, err := ioutil.ReadDir(exampleDir)
 		if err != nil {
@@ -66,8 +71,15 @@ func main() {
 		}
 		for _, fileInfo := range fileInfos {
 			if strings.HasSuffix(fileInfo.Name(), ".png") {
-				findSudoku(fileInfo.Name(), *debug)
+				s, err = findSudoku(fileInfo.Name(), *debug)
 			}
 		}
 	}
+
+	if err == nil && s != nil {
+		fmt.Println("Sudoku has been found!")
+	} else {
+		fmt.Println("Could not found sudoku")
+	}
+
 }
