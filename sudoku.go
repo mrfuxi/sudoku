@@ -66,6 +66,7 @@ func NewSudoku(image image.Image) (s Sudoku, err error) {
 	evaluateGrids(sudoku.PreProcessed, grids)
 	if len(grids) != 0 {
 		sudoku.Grid = grids[0] // Best grid
+		sudoku.Recognised = true
 	} else {
 		err = ErrNotRecognised
 	}
