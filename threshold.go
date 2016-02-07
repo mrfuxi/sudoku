@@ -1,10 +1,8 @@
 package sudoku
 
 import (
-	"errors"
+	"image"
 	"sync"
-
-	"github.com/gonum/matrix/mat64"
 )
 
 type thresholdType int
@@ -14,76 +12,99 @@ const (
 	threshBinaryInv
 )
 
-var (
-	errBlockSize = errors.New("Incorrect block size. Has to be odd number greater than 1.")
-)
-
-func viewValues(start, ksize, total int) (newStart int, newNum int) {
-	newNum = ksize
-	newStart = start
-	if start < 0 {
-		newNum += start
-		newStart = 0
-	} else if start+ksize > total {
-		newNum = total - start
+func inRange(val, max int) int {
+	if val < 0 {
+		return 0
 	}
-	return
+	if val > max-1 {
+		return max - 1
+	}
+	return val
 }
 
-func meanMat(row, rows, col, cols, delta, ksize int, src *mat64.Dense) (m float64) {
-	startRow, rowNum := viewValues(row-delta, ksize, rows)
-	startCol, colNum := viewValues(col-delta, ksize, cols)
-	sub := src.View(startRow, startCol, rowNum, colNum)
-	sum := mat64.Sum(sub)
-	return sum / float64(rowNum*colNum)
-}
-
-func meanFilter(src *mat64.Dense, ksize int) (dst *mat64.Dense) {
+func meanHorizontal(src *image.Gray, radius int) (dst *image.Gray) {
 	var wg sync.WaitGroup
-	rows, cols := src.Dims()
-	dst = mat64.NewDense(rows, cols, nil)
-	delta := (ksize - 1) / 2
-	for col := 0; col < cols; col++ {
+	norm := float64(radius*2 + 1)
+	dst = image.NewGray(src.Bounds())
+	width, height := src.Bounds().Max.X, src.Bounds().Max.Y
+
+	for y := 0; y < height; y++ {
 		wg.Add(1)
-		go func(col int) {
-			for row := 0; row < rows; row++ {
-				m := meanMat(row, rows, col, cols, delta, ksize, src)
-				dst.Set(row, col, m)
+		go func(y int) {
+			total := 0.0
+
+			for kx := -radius; kx <= radius; kx++ {
+				total += float64(src.Pix[src.PixOffset(inRange(kx, width), y)])
+			}
+			dst.Pix[dst.PixOffset(0, y)] = uint8(total / norm)
+
+			for x := 1; x < width; x++ {
+				total -= float64(src.Pix[src.PixOffset(inRange(x-radius-1, width), y)])
+				total += float64(src.Pix[src.PixOffset(inRange(x+radius, width), y)])
+
+				dst.Pix[dst.PixOffset(x, y)] = uint8(total / norm)
 			}
 			wg.Done()
-		}(col)
+		}(y)
 	}
 	wg.Wait()
 	return
 }
 
-func adaptiveThreshold(src *mat64.Dense, maxValue float64, threshold thresholdType, blockSize int, delta float64) (dst *mat64.Dense) {
-	if blockSize%2 != 1 || blockSize < 1 {
-		panic(errBlockSize)
-	}
+func meanVertical(src *image.Gray, radius int) (dst *image.Gray) {
+	var wg sync.WaitGroup
+	norm := float64(radius*2 + 1)
+	dst = image.NewGray(src.Bounds())
+	width, height := src.Bounds().Max.X, src.Bounds().Max.Y
 
-	if maxValue < 0 {
-		return src
-	}
+	for x := 0; x < width; x++ {
+		wg.Add(1)
+		go func(x int) {
 
-	dst = meanFilter(src, blockSize)
-	rows, cols := src.Dims()
-	for col := 0; col < cols; col++ {
-		for row := 0; row < rows; row++ {
-			newVal := 0.0
-			dstVal := dst.At(row, col) - delta
-			srcVal := src.At(row, col)
-			if threshold == threshBinary {
-				if srcVal > dstVal {
-					newVal = maxValue
-				}
-			} else if threshold == threshBinaryInv {
-				if srcVal < dstVal {
-					newVal = maxValue
-				}
+			total := 0.0
+
+			for ky := -radius; ky <= radius; ky++ {
+				total += float64(src.Pix[src.PixOffset(x, inRange(ky, height))])
 			}
-			dst.Set(row, col, newVal)
-		}
+			dst.Pix[dst.PixOffset(x, 0)] = uint8(total / norm)
+
+			for y := 1; y < height; y++ {
+				total -= float64(src.Pix[src.PixOffset(x, inRange(y-radius-1, height))])
+				total += float64(src.Pix[src.PixOffset(x, inRange(y+radius, height))])
+
+				dst.Pix[dst.PixOffset(x, y)] = uint8(total / norm)
+			}
+			wg.Done()
+		}(x)
 	}
-	return dst
+	wg.Wait()
+	return
+}
+
+func mean(src *image.Gray, radius int) *image.Gray {
+	return meanVertical(meanHorizontal(src, radius), radius)
+}
+
+func adaptiveThreshold(src image.Gray, maxValue uint8, threshold thresholdType, radius int, delta int) image.Gray {
+	dst := mean(&src, radius)
+
+	var newVal uint8
+	for i, srcVal := range src.Pix {
+		newVal = 0
+		dstVal := int(dst.Pix[i]) - (delta)
+
+		if threshold == threshBinary {
+			if int(srcVal) > dstVal {
+				newVal = maxValue
+			}
+		} else if threshold == threshBinaryInv {
+			if int(srcVal) < dstVal {
+				newVal = maxValue
+			}
+		}
+
+		dst.Pix[i] = newVal
+	}
+
+	return *dst
 }

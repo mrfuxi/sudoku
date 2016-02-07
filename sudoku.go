@@ -40,6 +40,7 @@ func NewSudoku(image image.Image) (s Sudoku, err error) {
 
 	t0 := time.Now()
 	sudoku.PreProcessed = preProcess(sudoku.BaseImage)
+	t1 := time.Now()
 	lines := houghLines(sudoku.PreProcessed, nil, 80, 200)
 	lines = removeDuplicateLines(lines, width, height)
 	bucketSize := 90 / 5
@@ -71,7 +72,8 @@ func NewSudoku(image image.Image) (s Sudoku, err error) {
 		err = ErrNotRecognised
 	}
 
-	t1 := time.Now()
-	fmt.Printf("Time to find Sudoku %v\n", t1.Sub(t0))
+	t2 := time.Now()
+	fmt.Printf("Time to find Sudoku %v. PreProcessing: %v. Success: %v\n", t2.Sub(t0), t1.Sub(t0), sudoku.Recognised)
+
 	return sudoku, err
 }

@@ -36,6 +36,22 @@ func grayImage(src image.Image) (dst image.Gray) {
 	return dst
 }
 
+func windowSize(img image.Image, divider int) int {
+	bounds := img.Bounds()
+	w, h := bounds.Max.X, bounds.Max.Y
+
+	max := h
+	if w > max {
+		max = h
+	}
+
+	window := max / divider
+	if window%2 == 0 {
+		window++
+	}
+	return window
+}
+
 func imageToMatrix(src image.Gray) (dst *mat64.Dense) {
 	bounds := src.Bounds()
 	w, h := bounds.Max.X, bounds.Max.Y
@@ -66,35 +82,15 @@ func matrixToImage(src *mat64.Dense) (dst image.Gray) {
 }
 
 // Initial threshold to get binary image
-func binarize(src *mat64.Dense) (dst *mat64.Dense) {
-	rows, cols := src.Dims()
-	max := rows
-	if cols > max {
-		max = cols
-	}
-
-	window := max / 10
-	if window%2 == 0 {
-		window++
-	}
-
-	return adaptiveThreshold(src, 1, threshBinaryInv, window, 0)
+func binarize(src image.Gray) (dst image.Gray) {
+	window := windowSize(&src, 10)
+	return adaptiveThreshold(src, 255, threshBinaryInv, (window-1)/2, 0)
 }
 
 // Removes body of regions over 1/20 of image width/height
-func removeBlobsBody(src *mat64.Dense) (dst *mat64.Dense) {
-	_, cols := src.Dims()
-	max := cols
-	if cols > max {
-		max = cols
-	}
-
-	window := max / 20
-	if window%2 == 0 {
-		window++
-	}
-
-	return adaptiveThreshold(src, 1, threshBinary, window, -0.5)
+func removeBlobsBody(src image.Gray) (dst image.Gray) {
+	window := windowSize(&src, 20)
+	return adaptiveThreshold(src, 255, threshBinary, (window-1)/2, -128)
 }
 
 // PreProcess prepares original image for actual work
@@ -103,10 +99,8 @@ func removeBlobsBody(src *mat64.Dense) (dst *mat64.Dense) {
 // - removes some of big areas/blobs
 func preProcess(img image.Image) *mat64.Dense {
 	grayImg := grayImage(img)
-	grayMat := imageToMatrix(grayImg)
-
-	binary := binarize(grayMat)
+	binary := binarize(grayImg)
 	deblobbed := removeBlobsBody(binary)
-
-	return deblobbed
+	mat := imageToMatrix(deblobbed)
+	return mat
 }

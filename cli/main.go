@@ -25,7 +25,7 @@ func getExampleImage(name string) (image.Image, error) {
 	filePath := path.Join(exampleDir, name)
 	reader, err := os.Open(filePath)
 	if err != nil {
-		return nil, err
+		log.Fatalln(err)
 	}
 
 	img, _, err := image.Decode(reader)
@@ -35,7 +35,7 @@ func getExampleImage(name string) (image.Image, error) {
 func findSudoku(filename string, debug bool) (sudoku.Sudoku, error) {
 	img, err := getExampleImage(filename)
 	if err != nil {
-		fmt.Println(err)
+		log.Fatalln(err)
 	}
 
 	return sudoku.NewSudoku(img)
@@ -79,7 +79,7 @@ func main() {
 	if err == nil && s != nil {
 		fmt.Println("Sudoku has been found!")
 	} else {
-		fmt.Println("Could not found sudoku")
+		fmt.Println("Could not find sudoku")
 	}
 
 }
