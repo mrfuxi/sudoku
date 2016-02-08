@@ -6,6 +6,7 @@ import (
 	"image/png"
 	"os"
 	"path"
+	"sync"
 
 	"github.com/gonum/matrix/mat64"
 )
@@ -23,16 +24,22 @@ func saveImage(image image.Image, name string) error {
 }
 
 func grayImage(src image.Image) (dst image.Gray) {
+	var wg sync.WaitGroup
 	bounds := src.Bounds()
 	w, h := bounds.Max.X, bounds.Max.Y
 	dst = *image.NewGray(bounds)
 	for x := 0; x < w; x++ {
-		for y := 0; y < h; y++ {
-			srcColor := src.At(x, y)
-			dstColor := color.GrayModel.Convert(srcColor)
-			dst.Set(x, y, dstColor)
-		}
+		wg.Add(1)
+		go func(x int) {
+			for y := 0; y < h; y++ {
+				srcColor := src.At(x, y)
+				dstColor := color.GrayModel.Convert(srcColor)
+				dst.Set(x, y, dstColor)
+			}
+			wg.Done()
+		}(x)
 	}
+	wg.Wait()
 	return dst
 }
 
