@@ -1,0 +1,9 @@
+{
+  "name": "sudoku-hinter",
+  "version": "0.0.1",
+  "dependencies": {
+    "blueimp-canvas-to-blob": "~3.1.0",
+    "jquery": "~2.2.0"
+  },
+  "private": true
+}

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Sudoku Hinter</title>
+        <script type="text/javascript" src="static/components/jquery/dist/jquery.min.js"></script>
+        <script type="text/javascript" src="static/js/sudoku.js"></script>
+        <link rel="stylesheet" type="text/css" href="static/css/sudoku.css">
+    </head>
+    <body>
+        {{ if .Error }}
+        <div>
+            {{ .Error }}
+        </div>
+        {{ end }}
+
+        <form enctype="multipart/form-data" method="post">
+            <input id="upload" type="file" name="uploadfile" accept="image/*" capture="camera">
+            <input type="submit" value="Upload sudoku" />
+        </form>
+
+        <canvas id="canvas"></canvas>
+
+        {{ if .Image }}
+        <img id="result" src="data:{{ .ContentType }};base64,{{ .Image }}" />
+        {{ end }}
+    </body>
+</html>
