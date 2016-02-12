@@ -28,7 +28,31 @@ func (l *lineSudoku) Overlay() image.Image {
 	if !l.Recognised {
 		return nil
 	}
-	return drawLines(l.BaseImage, append(l.Grid.Horizontal, l.Grid.Vertical...))
+
+	_, p1 := intersection(l.Grid.Horizontal[0], l.Grid.Vertical[0])
+	_, p2 := intersection(l.Grid.Horizontal[0], l.Grid.Vertical[9])
+	_, p3 := intersection(l.Grid.Horizontal[9], l.Grid.Vertical[9])
+	_, p4 := intersection(l.Grid.Horizontal[9], l.Grid.Vertical[0])
+
+	src := [4]pointF{
+		newPointF(p1),
+		newPointF(p2),
+		newPointF(p3),
+		newPointF(p4),
+	}
+
+	size := 500.0
+	dst := [4]pointF{
+		pointF{0, 0},
+		pointF{size, 0},
+		pointF{size, size},
+		pointF{0, size},
+	}
+
+	grayImg := grayImage(l.BaseImage)
+
+	proj := newPerspective(src, dst)
+	return proj.warpPerspective(&grayImg)
 }
 
 // NewSudoku processes given image in order to find sudoku puzzle on the image

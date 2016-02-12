@@ -13,6 +13,13 @@ type pointF struct {
 	Y float64
 }
 
+func newPointF(pt xyPoint) pointF {
+	return pointF{
+		X: float64(pt.X),
+		Y: float64(pt.Y),
+	}
+}
+
 type perspectiveTrasnformation struct {
 	H11       float64 // Deconstructed homography matrix
 	H12       float64
