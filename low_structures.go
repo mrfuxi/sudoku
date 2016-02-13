@@ -2,6 +2,7 @@ package sudoku
 
 import (
 	"fmt"
+	"image"
 	"math"
 
 	"github.com/gonum/matrix/mat64"
@@ -18,22 +19,17 @@ func (b angleBucket) String() string {
 	return fmt.Sprintf("Bucket{%.0f, %.0f}", b.Start*180/math.Pi, b.End*180/math.Pi)
 }
 
-type xyPoint struct {
-	X int
-	Y int
-}
-
-func (p xyPoint) DistanceTo(other xyPoint) float64 {
-	return math.Hypot(float64(p.X-other.X), float64(p.Y-other.Y))
-}
-
 type lineFragment struct {
-	Start xyPoint
-	End   xyPoint
+	Start image.Point
+	End   image.Point
 }
 
 func (f lineFragment) Length() float64 {
-	return f.Start.DistanceTo(f.End)
+	return distanceBetweenPoints(f.Start, f.End)
+}
+
+func distanceBetweenPoints(a, b image.Point) float64 {
+	return math.Hypot(float64(a.X-b.X), float64(a.Y-b.Y))
 }
 
 func similarAngles(a, b float64) bool {
@@ -61,7 +57,7 @@ func similarAngles(a, b float64) bool {
 //
 // As matrix:
 // A*X = b
-func intersection(lineA, lineB polarLine) (bool, xyPoint) {
+func intersection(lineA, lineB polarLine) (bool, image.Point) {
 	A := mat64.NewDense(2, 2, []float64{
 		math.Cos(lineA.Theta), math.Sin(lineA.Theta),
 		math.Cos(lineB.Theta), math.Sin(lineB.Theta),
@@ -74,7 +70,7 @@ func intersection(lineA, lineB polarLine) (bool, xyPoint) {
 
 	ok := err == nil
 	// Using 0.5 to force round to nearest int rather than Floor
-	point := xyPoint{
+	point := image.Point{
 		X: int(x.At(0, 0) + 0.5),
 		Y: int(x.At(1, 0) + 0.5),
 	}
@@ -235,7 +231,7 @@ func putLinesIntoBuckets(buckets map[float64][]angleBucket, lines []polarLine) m
 }
 
 // Bresenham's line algorithm
-func pointsOnLineFragment(fragment lineFragment) []xyPoint {
+func pointsOnLineFragment(fragment lineFragment) []image.Point {
 	x0, x1 := fragment.Start.X, fragment.End.X
 	y0, y1 := fragment.Start.Y, fragment.End.Y
 
@@ -253,14 +249,14 @@ func pointsOnLineFragment(fragment lineFragment) []xyPoint {
 		dy = -dy
 	}
 
-	points := make([]xyPoint, 0)
+	points := make([]image.Point, 0)
 
 	var err float64
 	x, y := x0, y0
 	if dx > dy {
 		err = dx / 2.0
 		for {
-			points = append(points, xyPoint{x, y})
+			points = append(points, image.Point{x, y})
 			if x == x1 {
 				break
 			}
@@ -275,7 +271,7 @@ func pointsOnLineFragment(fragment lineFragment) []xyPoint {
 	} else {
 		err = dy / 2.0
 		for {
-			points = append(points, xyPoint{x, y})
+			points = append(points, image.Point{x, y})
 			if y == y1 {
 				break
 			}

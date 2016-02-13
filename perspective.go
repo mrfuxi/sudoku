@@ -13,7 +13,7 @@ type pointF struct {
 	Y float64
 }
 
-func newPointF(pt xyPoint) pointF {
+func newPointF(pt image.Point) pointF {
 	return pointF{
 		X: float64(pt.X),
 		Y: float64(pt.Y),

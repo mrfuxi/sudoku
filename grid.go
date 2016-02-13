@@ -1,6 +1,7 @@
 package sudoku
 
 import (
+	"image"
 	"math"
 	"sort"
 
@@ -164,7 +165,7 @@ func linearDistances(lines []polarLine, dividerLine polarLine) []scoredLines {
 		return matches
 	}
 
-	intersections := make([]xyPoint, linesCount, linesCount)
+	intersections := make([]image.Point, linesCount, linesCount)
 	for i, line := range lines {
 		_, point := intersection(line, dividerLine)
 		intersections[i] = point
@@ -172,7 +173,7 @@ func linearDistances(lines []polarLine, dividerLine polarLine) []scoredLines {
 
 	points := make([]float64, len(lines), len(lines))
 	for i, point := range intersections {
-		points[i] = intersections[0].DistanceTo(point)
+		points[i] = distanceBetweenPoints(intersections[0], point)
 	}
 
 	distances := preparePointDistances(points)
