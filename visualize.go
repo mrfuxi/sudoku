@@ -36,3 +36,25 @@ func drawLines(src image.Image, lines []polarLine) image.Image {
 	gc.FillStroke()
 	return dst
 }
+
+func drawLineFragments(src image.Image, fragments []lineFragment) image.Image {
+	dst := image.NewRGBA(src.Bounds())
+
+	gc := draw2dimg.NewGraphicContext(dst)
+	gc.SetFillColor(color.RGBA{0x0, 0x0, 0x0, 0xff})
+	gc.SetStrokeColor(color.RGBA{0x0, 0xff, 0x0, 0xff})
+	gc.SetLineWidth(2)
+	gc.Clear()
+	gc.DrawImage(src)
+
+	for _, fragment := range fragments {
+		x1, y1 := float64(fragment.Start.X), float64(fragment.Start.Y)
+		x2, y2 := float64(fragment.End.X), float64(fragment.End.Y)
+		gc.MoveTo(x1, y1)
+		gc.LineTo(x2, y2)
+		gc.Close()
+	}
+
+	gc.FillStroke()
+	return dst
+}
