@@ -1,6 +1,7 @@
 package sudoku
 
 import (
+	"image"
 	"math"
 	"testing"
 
@@ -58,18 +59,18 @@ func TestIntersections(t *testing.T) {
 		a        polarLine
 		b        polarLine
 		ok       bool
-		solution xyPoint
+		solution image.Point
 	}{
-		{polarLine{Theta: 0.000000, Distance: 10}, polarLine{Theta: 1.570796, Distance: 10}, true, xyPoint{10, 10}},
-		{polarLine{Theta: 0.000000, Distance: 10}, polarLine{Theta: 0.785398, Distance: 148}, true, xyPoint{10, 199}},
-		{polarLine{Theta: 0.000000, Distance: 10}, polarLine{Theta: 0.453786, Distance: 184}, true, xyPoint{10, 399}},
-		{polarLine{Theta: 0.000000, Distance: 10}, polarLine{Theta: 1.117011, Distance: 184}, true, xyPoint{10, 200}},
-		{polarLine{Theta: 0.000000, Distance: 10}, polarLine{Theta: 0.785398, Distance: 290}, true, xyPoint{10, 400}},
-		{polarLine{Theta: 0.785398, Distance: 148}, polarLine{Theta: 1.117011, Distance: 184}, true, xyPoint{9, 200}},
-		{polarLine{Theta: 0.785398, Distance: 148}, polarLine{Theta: 0.785399, Distance: 290}, true, xyPoint{-100409041, 100409284}}, // lines are almost parallel
-		{polarLine{Theta: 0.000000, Distance: 10}, polarLine{Theta: 0.000000, Distance: 20}, false, xyPoint{0, 0}},                   // no solution, lines are parallel
-		{polarLine{Theta: 0.000000, Distance: 10}, polarLine{Theta: 0.000000, Distance: 10}, false, xyPoint{0, 0}},                   // no solution, lines are parallel
-		{polarLine{Theta: 0.785398, Distance: 148}, polarLine{Theta: 0.785398, Distance: 290}, false, xyPoint{0, 0}},                 // no solution, lines are parallel
+		{polarLine{Theta: 0.000000, Distance: 10}, polarLine{Theta: 1.570796, Distance: 10}, true, image.Point{10, 10}},
+		{polarLine{Theta: 0.000000, Distance: 10}, polarLine{Theta: 0.785398, Distance: 148}, true, image.Point{10, 199}},
+		{polarLine{Theta: 0.000000, Distance: 10}, polarLine{Theta: 0.453786, Distance: 184}, true, image.Point{10, 399}},
+		{polarLine{Theta: 0.000000, Distance: 10}, polarLine{Theta: 1.117011, Distance: 184}, true, image.Point{10, 200}},
+		{polarLine{Theta: 0.000000, Distance: 10}, polarLine{Theta: 0.785398, Distance: 290}, true, image.Point{10, 400}},
+		{polarLine{Theta: 0.785398, Distance: 148}, polarLine{Theta: 1.117011, Distance: 184}, true, image.Point{9, 200}},
+		{polarLine{Theta: 0.785398, Distance: 148}, polarLine{Theta: 0.785399, Distance: 290}, true, image.Point{-100409041, 100409284}}, // lines are almost parallel
+		{polarLine{Theta: 0.000000, Distance: 10}, polarLine{Theta: 0.000000, Distance: 20}, false, image.Point{0, 0}},                   // no solution, lines are parallel
+		{polarLine{Theta: 0.000000, Distance: 10}, polarLine{Theta: 0.000000, Distance: 10}, false, image.Point{0, 0}},                   // no solution, lines are parallel
+		{polarLine{Theta: 0.785398, Distance: 148}, polarLine{Theta: 0.785398, Distance: 290}, false, image.Point{0, 0}},                 // no solution, lines are parallel
 	}
 	for _, tt := range examples {
 		ok, point := intersection(tt.a, tt.b)
@@ -82,19 +83,19 @@ func TestIntersections(t *testing.T) {
 
 func TestPointDistince(t *testing.T) {
 	var examples = []struct {
-		a        xyPoint
-		b        xyPoint
+		a        image.Point
+		b        image.Point
 		distance float64
 	}{
-		{xyPoint{0, 0}, xyPoint{1, 1}, math.Sqrt(2)},
-		{xyPoint{1, 1}, xyPoint{2, 2}, math.Sqrt(2)},
-		{xyPoint{0, 0}, xyPoint{1, 2}, math.Sqrt(5)},
-		{xyPoint{-1, -1}, xyPoint{1, 1}, math.Sqrt(8)},
+		{image.Point{0, 0}, image.Point{1, 1}, math.Sqrt(2)},
+		{image.Point{1, 1}, image.Point{2, 2}, math.Sqrt(2)},
+		{image.Point{0, 0}, image.Point{1, 2}, math.Sqrt(5)},
+		{image.Point{-1, -1}, image.Point{1, 1}, math.Sqrt(8)},
 	}
 
 	for _, tt := range examples {
-		distanceA := tt.a.DistanceTo(tt.b)
-		distanceB := tt.b.DistanceTo(tt.a)
+		distanceA := distanceBetweenPoints(tt.a, tt.b)
+		distanceB := distanceBetweenPoints(tt.b, tt.a)
 		assert.Equal(t, distanceA, distanceB)
 		assert.Equal(t, tt.distance, distanceA)
 		assert.Equal(t, tt.distance, distanceB)
@@ -400,15 +401,15 @@ func TestPutLinesIntoBucketsReuseLineIfBucketsHaveSlightlyDifferent(t *testing.T
 func TestPointsOnFragment(t *testing.T) {
 	examples := []struct {
 		fragment lineFragment
-		points   []xyPoint
+		points   []image.Point
 	}{
 		{
-			lineFragment{Start: xyPoint{0, 0}, End: xyPoint{5, 5}},
-			[]xyPoint{{0, 0}, {1, 1}, {2, 2}, {3, 3}, {4, 4}, {5, 5}},
+			lineFragment{Start: image.Point{0, 0}, End: image.Point{5, 5}},
+			[]image.Point{{0, 0}, {1, 1}, {2, 2}, {3, 3}, {4, 4}, {5, 5}},
 		},
 		{
-			lineFragment{Start: xyPoint{0, 1}, End: xyPoint{6, 4}},
-			[]xyPoint{{0, 1}, {1, 1}, {2, 2}, {3, 2}, {4, 3}, {5, 3}, {6, 4}},
+			lineFragment{Start: image.Point{0, 1}, End: image.Point{6, 4}},
+			[]image.Point{{0, 1}, {1, 1}, {2, 2}, {3, 2}, {4, 3}, {5, 3}, {6, 4}},
 		},
 	}
 	for _, tt := range examples {

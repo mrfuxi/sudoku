@@ -15,7 +15,7 @@ var ErrNotRecognised = errors.New("Could not find sudoku on the image")
 // Sudoku interface describes access to recognised sudoku puzzle
 type Sudoku interface {
 	Overlay() image.Image
-	Extracted() image.Image
+	Extracted(imageSize int) image.Image
 }
 
 type lineSudoku struct {
@@ -44,7 +44,7 @@ func (l *lineSudoku) Overlay() image.Image {
 	return drawLineFragments(l.BaseImage, fragments)
 }
 
-func (l *lineSudoku) Extracted() image.Image {
+func (l *lineSudoku) Extracted(imageSize int) image.Image {
 	if !l.Recognised {
 		return nil
 	}
@@ -61,7 +61,7 @@ func (l *lineSudoku) Extracted() image.Image {
 		newPointF(p4),
 	}
 
-	size := 500.0
+	size := float64(imageSize)
 	dst := [4]pointF{
 		pointF{0, 0},
 		pointF{size, 0},
