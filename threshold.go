@@ -22,10 +22,10 @@ func inRange(val, max int) int {
 	return val
 }
 
-func meanHorizontal(src *image.Gray, radius int) (dst *image.Gray) {
+func meanHorizontal(src image.Gray, radius int) (dst image.Gray) {
 	var wg sync.WaitGroup
 	norm := float64(radius*2 + 1)
-	dst = image.NewGray(src.Bounds())
+	dst = *image.NewGray(src.Bounds())
 	width, height := src.Bounds().Max.X, src.Bounds().Max.Y
 
 	for y := 0; y < height; y++ {
@@ -51,10 +51,10 @@ func meanHorizontal(src *image.Gray, radius int) (dst *image.Gray) {
 	return
 }
 
-func meanVertical(src *image.Gray, radius int) (dst *image.Gray) {
+func meanVertical(src image.Gray, radius int) (dst image.Gray) {
 	var wg sync.WaitGroup
 	norm := float64(radius*2 + 1)
-	dst = image.NewGray(src.Bounds())
+	dst = *image.NewGray(src.Bounds())
 	width, height := src.Bounds().Max.X, src.Bounds().Max.Y
 
 	for x := 0; x < width; x++ {
@@ -81,12 +81,12 @@ func meanVertical(src *image.Gray, radius int) (dst *image.Gray) {
 	return
 }
 
-func mean(src *image.Gray, radius int) *image.Gray {
+func mean(src image.Gray, radius int) image.Gray {
 	return meanVertical(meanHorizontal(src, radius), radius)
 }
 
 func adaptiveThreshold(src image.Gray, maxValue uint8, threshold thresholdType, radius int, delta int) image.Gray {
-	dst := mean(&src, radius)
+	dst := mean(src, radius)
 
 	var newVal uint8
 	for i, srcVal := range src.Pix {
@@ -106,5 +106,5 @@ func adaptiveThreshold(src image.Gray, maxValue uint8, threshold thresholdType, 
 		dst.Pix[i] = newVal
 	}
 
-	return *dst
+	return dst
 }

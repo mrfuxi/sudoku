@@ -4,8 +4,6 @@ import (
 	"image"
 	"math"
 	"sort"
-
-	"github.com/gonum/matrix/mat64"
 )
 
 type lineGrid struct {
@@ -115,7 +113,7 @@ func possibleGrids(horizontal, vertical []polarLine) []lineGrid {
 	return grids
 }
 
-func evaluateGrids(image *mat64.Dense, grids []lineGrid) []lineGrid {
+func evaluateGrids(src image.Gray, grids []lineGrid) []lineGrid {
 	for _, grid := range grids {
 		hCount := len(grid.Horizontal)
 		vCount := len(grid.Vertical)
@@ -142,7 +140,7 @@ func evaluateGrids(image *mat64.Dense, grids []lineGrid) []lineGrid {
 			points := pointsOnLineFragment(fragment)
 			value := 1.0 / fragment.Length()
 			for _, point := range points {
-				if image.At(point.Y, point.X) != 0 {
+				if src.Pix[src.PixOffset(point.X, point.Y)] != 0 {
 					score += value
 				}
 			}

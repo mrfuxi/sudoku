@@ -90,7 +90,7 @@ func newPerspective(src [4]pointF, dst [4]pointF) *perspectiveTrasnformation {
 	return projection
 }
 
-func (p *perspectiveTrasnformation) warpPerspective(src *image.Gray) *image.Gray {
+func (p *perspectiveTrasnformation) warpPerspective(src image.Gray) image.Gray {
 	var wg sync.WaitGroup
 	maxX := 0.0
 	maxY := 0.0
@@ -98,7 +98,7 @@ func (p *perspectiveTrasnformation) warpPerspective(src *image.Gray) *image.Gray
 		maxX = math.Max(maxX, p.X)
 		maxY = math.Max(maxY, p.Y)
 	}
-	dst := image.NewGray(image.Rect(0, 0, int(maxX), int(maxY)))
+	dst := *image.NewGray(image.Rect(0, 0, int(maxX), int(maxY)))
 	mask := make([]bool, len(dst.Pix), len(dst.Pix))
 
 	srcWidth := src.Bounds().Max.X
@@ -128,7 +128,7 @@ func (p *perspectiveTrasnformation) warpPerspective(src *image.Gray) *image.Gray
 }
 
 // Fill in missing pixels
-func interpolateMissingPixels(img *image.Gray, mask []bool) {
+func interpolateMissingPixels(img image.Gray, mask []bool) {
 	var wg sync.WaitGroup
 	newMask := make([]bool, len(mask), len(mask))
 	copy(newMask, mask)

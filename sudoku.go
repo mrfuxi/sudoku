@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"image"
 	"time"
-
-	"github.com/gonum/matrix/mat64"
 )
 
 // ErrNotRecognised is reported when sudoku could not be localized on image
@@ -20,7 +18,7 @@ type Sudoku interface {
 
 type lineSudoku struct {
 	BaseImage    image.Image
-	PreProcessed *mat64.Dense
+	PreProcessed image.Gray
 	Grid         lineGrid
 	Recognised   bool
 }
@@ -72,7 +70,8 @@ func (l *lineSudoku) Extracted(imageSize int) image.Image {
 	grayImg := grayImage(l.BaseImage)
 
 	proj := newPerspective(src, dst)
-	return proj.warpPerspective(&grayImg)
+	warped := proj.warpPerspective(grayImg)
+	return &warped
 }
 
 // NewSudoku processes given image in order to find sudoku puzzle on the image
@@ -118,6 +117,5 @@ func NewSudoku(image image.Image) (s Sudoku, err error) {
 
 	t2 := time.Now()
 	fmt.Printf("Time to find Sudoku %v. PreProcessing: %v. Success: %v\n", t2.Sub(t0), t1.Sub(t0), sudoku.Recognised)
-
 	return sudoku, err
 }

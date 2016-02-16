@@ -1,9 +1,10 @@
 package sudoku
 
 import (
+	"image"
+	"image/color"
 	"testing"
 
-	"github.com/gonum/matrix/mat64"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -31,14 +32,14 @@ func TestGenerateThetas(t *testing.T) {
 }
 
 func TestHoughLines(t *testing.T) {
-	timg := mat64.NewDense(500, 700, nil)
-	timg.Set(10, 10, 1.0)
-	timg.Set(10, 200, 1.0)
-	timg.Set(10, 400, 1.0)
-	timg.Set(200, 10, 1.0)
-	timg.Set(400, 10, 1.0)
+	timg := image.NewGray(image.Rect(0, 0, 700, 500))
+	timg.SetGray(10, 10, color.Gray{1})
+	timg.SetGray(200, 10, color.Gray{1})
+	timg.SetGray(400, 10, color.Gray{1})
+	timg.SetGray(10, 200, color.Gray{1})
+	timg.SetGray(10, 400, color.Gray{1})
 
-	lines := houghLines(timg, nil, 0, 10)
+	lines := houghLines(*timg, nil, 0, 10)
 	if !assert.Len(t, lines, 6) {
 		t.FailNow()
 	}

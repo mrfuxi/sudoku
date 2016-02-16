@@ -3,12 +3,11 @@ package sudoku
 import (
 	"bytes"
 	"fmt"
+	"image"
 	"math"
 	"sort"
 	"sync"
 	"sync/atomic"
-
-	"github.com/gonum/matrix/mat64"
 )
 
 type polarLine struct {
@@ -58,12 +57,12 @@ func generateThetas(start, end, step float64) (thetas []float64) {
 	return thetas
 }
 
-func houghLines(src *mat64.Dense, thetas []float64, threshold uint64, limit int) []polarLine {
+func houghLines(src image.Gray, thetas []float64, threshold uint64, limit int) []polarLine {
 	if thetas == nil {
 		thetas = generateThetas(-math.Pi/2, math.Pi/2, math.Pi/180.0)
 	}
-	rows, cols := src.Dims()
-	maxR := 2 * math.Hypot(float64(cols), float64(rows))
+	maxY, maxX := src.Bounds().Max.Y, src.Bounds().Max.X
+	maxR := 2 * math.Hypot(float64(maxX), float64(maxY))
 	offset := maxR / 2
 
 	hAcc := make([][]uint64, int(maxR), int(maxR))
@@ -79,23 +78,23 @@ func houghLines(src *mat64.Dense, thetas []float64, threshold uint64, limit int)
 	}
 
 	var wg sync.WaitGroup
-	for col := 0; col < cols; col++ {
+	for y := 0; y < maxY; y++ {
 		wg.Add(1)
-		go func(col int) {
-			for row := 0; row < rows; row++ {
-				val := src.At(row, col)
+		go func(y int) {
+			for x := 0; x < maxX; x++ {
+				val := src.Pix[src.PixOffset(x, y)]
 				if val == 0 {
 					continue
 				}
 
 				for i := range thetas {
-					r := float64(col)*cos[i] + float64(row)*sin[i]
+					r := float64(x)*cos[i] + float64(y)*sin[i]
 					iry := int(r + offset)
 					atomic.AddUint64(&hAcc[iry][i], 1)
 				}
 			}
 			wg.Done()
-		}(col)
+		}(y)
 	}
 	wg.Wait()
 

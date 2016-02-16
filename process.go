@@ -7,8 +7,6 @@ import (
 	"os"
 	"path"
 	"sync"
-
-	"github.com/gonum/matrix/mat64"
 )
 
 func saveImage(image image.Image, name string) error {
@@ -59,35 +57,6 @@ func windowSize(img image.Image, divider int) int {
 	return window
 }
 
-func imageToMatrix(src image.Gray) (dst *mat64.Dense) {
-	bounds := src.Bounds()
-	w, h := bounds.Max.X, bounds.Max.Y
-	dst = mat64.NewDense(h, w, nil)
-	for x := 0; x < w; x++ {
-		for y := 0; y < h; y++ {
-			srcColor := src.GrayAt(x, y)
-			dst.Set(y, x, float64(srcColor.Y))
-		}
-	}
-	return dst
-}
-
-func matrixToImage(src *mat64.Dense) (dst image.Gray) {
-	rows, cols := src.Dims()
-	mult := 1.0
-	if mat64.Max(src) <= 1.0 {
-		mult = 255.0
-	}
-	dst = *image.NewGray(image.Rect(0, 0, cols, rows))
-	for col := 0; col < cols; col++ {
-		for row := 0; row < rows; row++ {
-			srcColor := src.At(row, col)
-			dst.SetGray(col, row, color.Gray{uint8(srcColor * mult)})
-		}
-	}
-	return dst
-}
-
 // Initial threshold to get binary image
 func binarize(src image.Gray) (dst image.Gray) {
 	window := windowSize(&src, 10)
@@ -104,10 +73,9 @@ func removeBlobsBody(src image.Gray) (dst image.Gray) {
 // - coverts to gray scale
 // - threshold to produce binary image
 // - removes some of big areas/blobs
-func preProcess(img image.Image) *mat64.Dense {
+func preProcess(img image.Image) image.Gray {
 	grayImg := grayImage(img)
 	binary := binarize(grayImg)
 	deblobbed := removeBlobsBody(binary)
-	mat := imageToMatrix(deblobbed)
-	return mat
+	return deblobbed
 }
