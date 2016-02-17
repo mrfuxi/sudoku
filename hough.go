@@ -117,8 +117,9 @@ func houghLines(src image.Gray, thetas []float64, threshold uint64, limit int) [
 				Distance: r,
 				Count:    count,
 			}
-			if !linesSet[line.HashKey()] {
-				linesSet[line.HashKey()] = true
+			hash := line.HashKey()
+			if !linesSet[hash] {
+				linesSet[hash] = true
 				lines = append(lines, line)
 			}
 		}
