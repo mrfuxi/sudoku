@@ -111,6 +111,7 @@ func NewSudoku(image image.Image) (s Sudoku, err error) {
 	if len(grids) != 0 {
 		sudoku.Grid = grids[0] // Best grid
 		sudoku.Recognised = true
+		extractCells(sudoku.Grid, sudoku.BaseImage)
 	} else {
 		err = ErrNotRecognised
 	}

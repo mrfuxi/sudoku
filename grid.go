@@ -254,3 +254,34 @@ func pointSimilarities(expectedPoints, distances []float64) (float64, []float64)
 
 	return (1 - fit), matches
 }
+
+func extractCells(grid lineGrid, img image.Image) (cells [9][9]image.Gray) {
+	grayImg := grayImage(img)
+
+	size := 28.0 // Size of learning data set: MNIST
+	dst := [4]pointF{
+		pointF{0, 0},
+		pointF{size, 0},
+		pointF{size, size},
+		pointF{0, size},
+	}
+
+	for row := 0; row < 9; row++ {
+		for col := 0; col < 9; col++ {
+			_, p1 := intersection(grid.Horizontal[row], grid.Vertical[col])
+			_, p2 := intersection(grid.Horizontal[row], grid.Vertical[col+1])
+			_, p3 := intersection(grid.Horizontal[row+1], grid.Vertical[col+1])
+			_, p4 := intersection(grid.Horizontal[row+1], grid.Vertical[col])
+
+			src := [4]pointF{
+				newPointF(p1),
+				newPointF(p2),
+				newPointF(p3),
+				newPointF(p4),
+			}
+			proj := newPerspective(src, dst)
+			cells[row][col] = proj.warpPerspective(grayImg)
+		}
+	}
+	return
+}
