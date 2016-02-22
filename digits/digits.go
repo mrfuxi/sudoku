@@ -6,6 +6,12 @@ import (
 	"github.com/fxsjy/gonn/gonn"
 )
 
+var nn *gonn.NeuralNetwork
+
+func init() {
+	nn = gonn.LoadNN("mnist.nn")
+}
+
 func argmax(A []float64) (int, float64) {
 	x := 0
 	v := -1.0
@@ -24,8 +30,6 @@ func RecogniseDigit(img image.Gray) (int, float64) {
 	if img.Bounds().Max.X != 28 || img.Bounds().Max.Y != 28 {
 		panic("Image size is invalid, use 28x28.")
 	}
-
-	nn := gonn.LoadNN("mnist.nn")
 
 	input := make([]float64, 28*28, 28*28)
 	for i, pix := range img.Pix {
