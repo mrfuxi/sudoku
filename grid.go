@@ -1,9 +1,12 @@
 package sudoku
 
 import (
+	"fmt"
 	"image"
 	"math"
 	"sort"
+
+	"github.com/mrfuxi/sudoku/digits"
 )
 
 type lineGrid struct {
@@ -258,6 +261,7 @@ func pointSimilarities(expectedPoints, distances []float64) (float64, []float64)
 func extractCells(grid lineGrid, img image.Image) (cells [9][9]image.Gray) {
 	grayImg := grayImage(img)
 
+	margin := 2
 	size := 28.0 // Size of learning data set: MNIST
 	dst := [4]pointF{
 		pointF{0, 0},
@@ -273,6 +277,15 @@ func extractCells(grid lineGrid, img image.Image) (cells [9][9]image.Gray) {
 			_, p3 := intersection(grid.Horizontal[row+1], grid.Vertical[col+1])
 			_, p4 := intersection(grid.Horizontal[row+1], grid.Vertical[col])
 
+			p1.Y -= margin
+			p1.X -= margin
+			p2.Y -= margin
+			p2.X += margin
+			p3.X += margin
+			p3.Y += margin
+			p4.X -= margin
+			p4.Y += margin
+
 			src := [4]pointF{
 				newPointF(p1),
 				newPointF(p2),
@@ -281,6 +294,10 @@ func extractCells(grid lineGrid, img image.Image) (cells [9][9]image.Gray) {
 			}
 			proj := newPerspective(src, dst)
 			cells[row][col] = proj.warpPerspective(grayImg)
+
+			digit, _ := digits.RecogniseDigit(cells[row][col])
+			fn := fmt.Sprintf("%v_%v-%v.png", row, col, digit)
+			saveImage(&cells[row][col], fn)
 		}
 	}
 	return
