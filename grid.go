@@ -261,7 +261,7 @@ func pointSimilarities(expectedPoints, distances []float64) (float64, []float64)
 func extractCells(grid lineGrid, img image.Image) (cells [9][9]image.Gray) {
 	grayImg := grayImage(img)
 
-	margin := 2
+	margin := -2
 	size := 28.0 // Size of learning data set: MNIST
 	dst := [4]pointF{
 		pointF{0, 0},

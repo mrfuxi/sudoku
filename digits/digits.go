@@ -2,14 +2,32 @@ package digits
 
 import (
 	"image"
+	"image/color"
+	"os"
 
-	"github.com/fxsjy/gonn/gonn"
+	"github.com/mrfuxi/neural"
 )
 
-var nn *gonn.NeuralNetwork
+var nn neural.Evaluator
 
 func init() {
-	nn = gonn.LoadNN("mnist.nn")
+	inputSize := 28 * 28
+
+	activator := neural.NewSigmoidActivator()
+	outActivator := neural.NewSoftmaxActivator()
+	nn = neural.NewNeuralNetwork(
+		[]int{inputSize, 100, 10},
+		neural.NewFullyConnectedLayer(activator),
+		neural.NewFullyConnectedLayer(outActivator),
+	)
+
+	fn, err := os.Open("sudoku_123456789.dat")
+	if err != nil {
+		panic(err)
+	}
+	if err := neural.Load(nn, fn); err != nil {
+		panic(err)
+	}
 }
 
 func argmax(A []float64) (int, float64) {
@@ -32,15 +50,21 @@ func RecogniseDigit(img image.Gray) (int, float64) {
 	}
 
 	input := make([]float64, 28*28, 28*28)
-	for i, pix := range img.Pix {
-		if pix < 128 {
-			img.Pix[i] = 255
-			input[i] = 255
-		} else {
-			img.Pix[i] = 0
-			input[i] = 128
+	pos := 0
+	for x := 0; x < 28; x++ {
+		for y := 0; y < 28; y++ {
+			val := img.GrayAt(x, y).Y
+			if val < 128 {
+				val = 255 - val
+			} else {
+				val = 0
+			}
+
+			img.SetGray(x, y, color.Gray{Y: val})
+			input[pos] = float64(val) / 255
+			pos++
 		}
 	}
-	digit, confidence := argmax(nn.Forward(input))
+	digit, confidence := argmax(nn.Evaluate(input))
 	return digit, confidence
 }
