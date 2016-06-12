@@ -3,6 +3,7 @@ package digits
 import (
 	"image"
 	"image/color"
+	"log"
 	"os"
 
 	"github.com/mrfuxi/neural"
@@ -10,7 +11,8 @@ import (
 
 var nn neural.Evaluator
 
-func init() {
+// LoadNetwork intializes global neural network used to process digits
+func LoadNetwork(fileName string) {
 	inputSize := 28 * 28
 
 	activator := neural.NewSigmoidActivator()
@@ -21,12 +23,12 @@ func init() {
 		neural.NewFullyConnectedLayer(outActivator),
 	)
 
-	fn, err := os.Open("sudoku_123456789.dat")
+	fn, err := os.Open(fileName)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	if err := neural.Load(nn, fn); err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 }
 
@@ -44,7 +46,7 @@ func argmax(A []float64) (int, float64) {
 
 // RecogniseDigit takes 28x28 gray image and tries to recognise a digit
 // panics if image has wrong size
-func RecogniseDigit(img image.Gray) (int, float64) {
+func RecogniseDigit(img image.Gray, threshold uint8) (int, float64) {
 	if img.Bounds().Max.X != 28 || img.Bounds().Max.Y != 28 {
 		panic("Image size is invalid, use 28x28.")
 	}
@@ -54,7 +56,7 @@ func RecogniseDigit(img image.Gray) (int, float64) {
 	for x := 0; x < 28; x++ {
 		for y := 0; y < 28; y++ {
 			val := img.GrayAt(x, y).Y
-			if val < 128 {
+			if val < threshold {
 				val = 255 - val
 			} else {
 				val = 0

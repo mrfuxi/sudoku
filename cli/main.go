@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/mrfuxi/sudoku"
+	"github.com/mrfuxi/sudoku/digits"
 )
 
 const (
@@ -48,6 +49,7 @@ func main() {
 	var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 	var debug = flag.Bool("debug", false, "prepare debug images")
 	var file = flag.String("file", "", "file to process")
+	var nnFile = flag.String("nn", "", "neural network")
 
 	flag.Parse()
 	if *cpuprofile != "" {
@@ -62,6 +64,13 @@ func main() {
 	var s sudoku.Sudoku
 	var err error
 
+	if *nnFile == "" {
+		fmt.Println("Neural network file not provided. Use -nn FileName")
+		os.Exit(1)
+	}
+
+	digits.LoadNetwork(*nnFile)
+
 	if *file != "" {
 		s, err = findSudoku(*file, *debug)
 	} else {
@@ -70,7 +79,7 @@ func main() {
 			log.Fatal(err)
 		}
 		for _, fileInfo := range fileInfos {
-			if strings.HasSuffix(fileInfo.Name(), ".png") {
+			if strings.HasSuffix(fileInfo.Name(), ".png") || strings.HasSuffix(fileInfo.Name(), ".jpg") {
 				s, err = findSudoku(fileInfo.Name(), *debug)
 			}
 		}

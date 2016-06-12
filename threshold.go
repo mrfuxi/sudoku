@@ -108,3 +108,53 @@ func adaptiveThreshold(src image.Gray, maxValue uint8, threshold thresholdType, 
 
 	return dst
 }
+
+// Port from: https://en.wikipedia.org/wiki/Otsu%27s_method
+func otsuValue(img image.Gray) uint8 {
+	size := float64(len(img.Pix))
+	histogram := make([]float64, 256, 256)
+	for _, pix := range img.Pix {
+		histogram[pix] += 1.0
+	}
+
+	sum := 0.0
+	for i, val := range histogram {
+		sum += float64(i) * val
+	}
+
+	sumB := 0.0
+	wB := 0.0
+	wF := 0.0
+	mB := 0.0
+	mF := 0.0
+	max := 0.0
+	between := 0.0
+	threshold1 := 0.0
+	threshold2 := 0.0
+
+	for i, val := range histogram {
+		wB += val
+		if wB == 0 {
+			continue
+		}
+
+		wF = size - wB
+		if wF == 0 {
+			break
+		}
+		sumB += float64(i) * val
+
+		mB = sumB / wB
+		mF = (sum - sumB) / wF
+		between = wB * wF * (mB - mF) * (mB - mF)
+		if between >= max {
+			threshold1 = float64(i)
+			if between > max {
+				threshold2 = float64(i)
+			}
+			max = between
+		}
+	}
+
+	return uint8((threshold1 + threshold2) / 2.0)
+}

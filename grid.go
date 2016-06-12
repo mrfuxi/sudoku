@@ -261,7 +261,7 @@ func pointSimilarities(expectedPoints, distances []float64) (float64, []float64)
 func extractCells(grid lineGrid, img image.Image) (cells [9][9]image.Gray) {
 	grayImg := grayImage(img)
 
-	margin := -2
+	margin := 0
 	size := 28.0 // Size of learning data set: MNIST
 	dst := [4]pointF{
 		pointF{0, 0},
@@ -295,8 +295,9 @@ func extractCells(grid lineGrid, img image.Image) (cells [9][9]image.Gray) {
 			proj := newPerspective(src, dst)
 			cells[row][col] = proj.warpPerspective(grayImg)
 
-			digit, _ := digits.RecogniseDigit(cells[row][col])
-			fn := fmt.Sprintf("%v_%v-%v.png", row, col, digit)
+			cell := cells[row][col]
+			digit, conf := digits.RecogniseDigit(cell, otsuValue(cell))
+			fn := fmt.Sprintf("%v_%v-%v-%.2f.png", row, col, digit, conf)
 			saveImage(&cells[row][col], fn)
 		}
 	}
