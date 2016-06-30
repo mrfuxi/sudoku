@@ -15,6 +15,7 @@ import (
 
 	"github.com/mrfuxi/sudoku"
 	"github.com/mrfuxi/sudoku/digits"
+	"github.com/mrfuxi/sudoku/nngrid"
 )
 
 const (
@@ -50,6 +51,7 @@ func main() {
 	var debug = flag.Bool("debug", false, "prepare debug images")
 	var file = flag.String("file", "", "file to process")
 	var nnFile = flag.String("nn", "", "neural network")
+	var gnnFile = flag.String("gnn", "", "grid neural network")
 
 	flag.Parse()
 	if *cpuprofile != "" {
@@ -70,6 +72,7 @@ func main() {
 	}
 
 	digits.LoadNetwork(*nnFile)
+	nngrid.LoadNetwork(*gnnFile)
 
 	if *file != "" {
 		s, err = findSudoku(*file, *debug)

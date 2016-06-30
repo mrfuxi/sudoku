@@ -4,7 +4,11 @@ import (
 	"errors"
 	"fmt"
 	"image"
+	"image/color"
+	"image/draw"
 	"time"
+
+	"github.com/mrfuxi/sudoku/nngrid"
 )
 
 // ErrNotRecognised is reported when sudoku could not be localized on image
@@ -74,6 +78,47 @@ func (l *lineSudoku) Extracted(imageSize int) image.Image {
 	return &warped
 }
 
+func nnGrid(img image.Gray) {
+	dst := *image.NewRGBA(img.Bounds())
+	draw.Draw(&dst, dst.Bounds(), &img, image.ZP, draw.Src)
+
+	for x := 0; x < img.Bounds().Max.X-nngrid.InputSize; x += 4 {
+		for y := 0; y < img.Bounds().Max.Y-nngrid.InputSize; y += 4 {
+			z, _, _ := nngrid.RecogniseGrid(img, image.Point{x, y})
+
+			clr := color.RGBA{0, 0, 0, 0}
+			var alpha uint8 = 255
+			// alpha := uint8(255 * conf)
+			switch z {
+			case 1:
+				clr = color.RGBA{R: 255, G: 0, B: 0, A: alpha}
+			case 2:
+				clr = color.RGBA{R: 0, G: 255, B: 0, A: alpha}
+			case 3:
+				clr = color.RGBA{R: 0, G: 0, B: 255, A: alpha}
+			case 4:
+				clr = color.RGBA{R: 255, G: 255, B: 0, A: alpha}
+			case 5:
+				fallthrough
+			case 6:
+				fallthrough
+			case 7:
+				fallthrough
+			case 8:
+				clr = color.RGBA{R: 0, G: 255, B: 255, A: alpha}
+			case 9:
+				clr = color.RGBA{R: 255, G: 0, B: 255, A: alpha}
+			}
+
+			if clr.A == 0 {
+				continue
+			}
+			dst.Set(x+nngrid.InputSize/2, y+nngrid.InputSize/2, clr)
+		}
+	}
+	saveImage(&dst, "grid.png")
+}
+
 // NewSudoku processes given image in order to find sudoku puzzle on the image
 func NewSudoku(image image.Image) (s Sudoku, err error) {
 	sudoku := &lineSudoku{
@@ -84,6 +129,10 @@ func NewSudoku(image image.Image) (s Sudoku, err error) {
 	t0 := time.Now()
 	sudoku.PreProcessed = preProcess(sudoku.BaseImage)
 	t1 := time.Now()
+
+	nnGrid(sudoku.PreProcessed)
+
+	t2 := time.Now()
 	lines := houghLines(sudoku.PreProcessed, nil, 80, 200)
 	lines = removeDuplicateLines(lines, width, height)
 	bucketSize := 90 / 5
@@ -116,7 +165,7 @@ func NewSudoku(image image.Image) (s Sudoku, err error) {
 		err = ErrNotRecognised
 	}
 
-	t2 := time.Now()
-	fmt.Printf("Time to find Sudoku %v. PreProcessing: %v. Success: %v\n", t2.Sub(t0), t1.Sub(t0), sudoku.Recognised)
+	t3 := time.Now()
+	fmt.Printf("Time to find Sudoku %v. PreProcessing: %v. NN: %v. Success: %v\n", t3.Sub(t0), t1.Sub(t0), t2.Sub(t1), sudoku.Recognised)
 	return sudoku, err
 }
